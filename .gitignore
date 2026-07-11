@@ -1,0 +1,25 @@
+# Environment files
+.env
+.env.local
+!.env.example
+!.env.local.example
+
+# Dependencies
+node_modules/
+vendor/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Laravel specific
+server/laravel/storage/*.key
+server/laravel/bootstrap/cache/*.php
+
+# Next.js build output
+client/nextjs/.next/
+client/nextjs/out/
