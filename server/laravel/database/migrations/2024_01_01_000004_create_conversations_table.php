@@ -27,6 +27,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('conversations');
     }
-};git add .
-git commit -m "feat: add messages migration"
-git push
+};
