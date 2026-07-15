@@ -5,6 +5,93 @@
 
 ---
 
+## Sprint 0 — Enums & Models (July 13, 2026)
+
+### Decision: `$fillable` allow-list on every Model, even Admin-only or internal-only ones
+
+**Instead of:** Using `$guarded` (deny-list) on models, or skipping mass-assignment
+protection entirely on models that only ever receive input from trusted internal code
+(`Skill`, `AuditLog`).
+
+**Because:** The `User` model's first draft used `$guarded`, listing sensitive fields
+to protect. Caught in review: a deny-list fails open — if a new sensitive column gets
+added to a migration later and nobody remembers to add it to `$guarded`, it's
+mass-assignable by default with no warning. `$fillable` fails closed — a forgotten
+column simply isn't writable until someone deliberately adds it. Applied consistently
+across every model afterward, including `Skill` and `AuditLog`, which are never
+touched by direct user input at all — for those, the allow-list costs nothing and
+documents intent for anyone reading the model cold, even though the stricter threat
+model isn't technically required there.
+
+**Date:** July 13, 2026
+
+---
+
+### Decision: State-machine-owned model fields are set via direct property assignment
+
+- `save()`, never `update()`/`fill()`/`forceFill()`
+
+**Instead of:** Making fields like `SkillRequest.cancellation_reason`,
+`SkillRequest.cancelled_by`/`completed_by`, `Message.is_read`, and `Review.is_hidden`
+fillable so Services can write them through normal Eloquent mass-assignment methods.
+
+**Because:** These fields are deliberately excluded from `$fillable` since they must
+never be settable from raw user input (only a Service's validated state-transition
+logic should ever change them). But Services still legitimately need to write them.
+The resolved pattern: Services set these fields with direct property assignment
+(`$model->field = $value;`) and call `->save()` — this bypasses Laravel's
+mass-assignment guard entirely (which only applies to `fill()`/`create()`/`update()`),
+so the `$fillable` allow-list stays meaningful as a boundary against user input while
+Services retain full write access to fields they legitimately own. Chosen over
+`forceFill()` because it's more explicit line-by-line about which field is changing
+and why, matching SKILLSWAP.md's general preference for explicitness over bundled
+convenience (same spirit as the "One Atomic Write" rule).
+
+**Date:** July 13, 2026
+
+---
+
+### Decision: No `Notifiable` trait on the `User` model
+
+**Instead of:** Using Laravel's built-in notification system (`Notifiable` trait +
+database/mail notification channels), which is Laravel's default and what the
+scaffolded `User` model originally included.
+
+**Because:** SKILLSWAP.md already defines a custom `notifications` table with its own
+schema (`jsonb` data, `NotificationType` enum, `is_read` flag) and a dedicated
+`NotificationService` responsible for creation, real-time broadcast via Reverb, and
+cache invalidation. Laravel's built-in database notifications would create a
+conflicting/duplicate table shape (polymorphic `notifiable`, `data` as text, `read_at`
+instead of `is_read`) and route logic through the framework's Channel system rather
+than through our own Service/Repository layer — violating the "all business logic
+lives in Services" rule and introducing side effects (`NotificationSent` events firing
+from a trait) outside our own architecture.
+
+**Date:** July 13, 2026
+
+---
+
+### Decision: Keep the `App\Models\Notification` class name despite colliding with
+
+Laravel's built-in `Illuminate\Notifications\Notification`
+
+**Instead of:** Renaming the model to something unambiguous (e.g. `AppNotification`) to
+avoid sharing a class name with Laravel's own base notification class.
+
+**Because:** The two classes live in different namespaces and, given the decision
+above to skip `Notifiable` and Laravel's notification system entirely, the built-in
+`Illuminate\Notifications\Notification` is never imported anywhere in this codebase —
+the collision is real in principle but has no actual code path where it could cause a
+bug. Renaming would also break the consistent "class name matches table name,
+singularized" convention followed by every other model, which is more likely to
+confuse someone reading the codebase cold than a collision that can't occur in
+practice. Mitigated instead with an explicit docblock on the model itself, warning
+future readers (human or AI) not to "fix" the shared name without this context.
+
+**Date:** July 13, 2026
+
+---
+
 ## Sprint 0 — Foundation (July 13, 2026)
 
 ### Decision: No Repository interfaces — Services depend on concrete Repository classes

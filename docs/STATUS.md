@@ -4,9 +4,130 @@
 
 ---
 
-## Current Sprint: 0 (Foundation — Repo, Docker, Full Schema)
+## Current Sprint: 0 (Foundation — Enums, Models, Auth Skeleton Pending)
 
 ## Last Updated: July 13, 2026
+
+---
+
+## Sprint 0 — Enums & Models (July 13, 2026)
+
+### Status: COMPLETE — All 6 enums and all 9 models written, reviewed, committed. Auth skeleton, CORS, global exception handler, and `config/skillswap.php` boot-time validation still pending before Sprint 0 closes.
+
+### Workflow change this session:
+
+Started using DeepSeek for implementation, with Claude reviewing every file against
+SKILLSWAP.md's Architecture Rules before approval. One file at a time, plan-then-code,
+no bundling. This worked well — several real gaps were caught in review rather than
+discovered later as bugs (see below and DECISIONS.md).
+
+### Enums Created (`app/Enums/`):
+
+- `UserRole` — `USER`, `ADMIN`
+- `SkillCategory` — all ten categories from the schema
+- `ProficiencyLevel` — `BEGINNER`, `INTERMEDIATE`, `ADVANCED`, `EXPERT`
+- `SkillRequestStatus` — all six states matching the state machine diagram
+- `NotificationType` — all eight event types, including `MESSAGE_RECEIVED`
+- `MessageType` — `TEXT`, `IMAGE`, `FILE`
+
+All string-backed, `declare(strict_types=1)` adopted as a standing convention starting
+with the second enum onward.
+
+### Models Created (`app/Models/`):
+
+- `User` (replacing Laravel's default scaffold) — UUID PK via `HasUuids`, `SoftDeletes`,
+  `$fillable` allow-list (switched from an initial `$guarded` deny-list — see
+  DECISIONS.md), `role` cast to `UserRole`, password auto-hashed via Laravel's
+  `'password' => 'hashed'` cast, `Notifiable` deliberately omitted (see DECISIONS.md)
+- `Skill` — UUID PK, `$fillable` allow-list even though Admin-only (defense in depth),
+  `category` cast to `SkillCategory`, no `SoftDeletes`
+- `UserSkill` — pivot model, `belongsTo` to both `User` and `Skill`, `proficiency_level`
+  cast to enum, both intent booleans cast natively
+- `SkillRequest` — five `belongsTo` relationships (`learner`, `teacher`, `skill`,
+  `cancelledBy`, `completedBy`), `$fillable` limited to creation-time fields only;
+  state-machine-owned fields (`status`, `cancellation_reason`, `cancelled_by`,
+  `completed_by`, `completed_at`) are deliberately excluded from `$fillable` and will
+  be set via direct property assignment + `save()` in `SkillRequestService` — never
+  `update()`/`fill()` (see DECISIONS.md)
+- `Conversation` — `userOne`/`userTwo` `belongsTo` (explicit FKs), `hasMany` to
+  `Message`; the lexicographically-smaller-UUID ordering rule is confirmed to live in
+  `ConversationService`, not the model — model has no enforcement of it by design
+- `Message` — `const UPDATED_AT = null` (no `updated_at` column exists — messages are
+  immutable); `is_read` excluded from `$fillable`, same direct-assignment pattern as
+  `SkillRequest`; content-or-attachment validation confirmed to belong in
+  `MessageService` before insert, not left to the DB `CHECK` constraint alone
+- `Review` — `reviewer`/`reviewee` `belongsTo` (explicit FKs), `is_hidden` excluded from
+  `$fillable` (Admin-only), rating-range validation confirmed to belong in
+  `ReviewService` before insert
+- `Notification` — `data` cast to `array` (jsonb), `is_read` excluded from `$fillable`;
+  class name deliberately kept as `Notification` despite sharing a name with Laravel's
+  built-in `Illuminate\Notifications\Notification` — documented with an explicit
+  docblock warning rather than renamed (see DECISIONS.md)
+- `AuditLog` — nullable `user_id` for system/scheduled-job-triggered entries, `metadata`
+  cast to `array`; kept a `$fillable` allow-list even though only internal Services will
+  ever create these rows, for consistency and self-documentation at no real cost
+
+### Bugs/Gaps Caught During Review (fixed before approval, not after):
+
+- Initial `User` model used `$guarded` (deny-list) instead of `$fillable` (allow-list) —
+  caught because a deny-list fails open (a new sensitive column added later is
+  mass-assignable by default unless someone remembers to guard it); switched to
+  `$fillable` across every subsequent model for the same reason
+- `SkillRequest`/`Message`/`Review` all needed explicit confirmation of how their
+  Service-owned-only fields (cancellation fields, `is_read`, `is_hidden`) actually get
+  written, given they're deliberately excluded from `$fillable` — resolved with a
+  consistent direct-assignment-then-`save()` pattern across all three, rather than each
+  Service inventing its own approach
+- `Notification` model name collision with Laravel's core notification class — assessed
+  and accepted as harmless given the project's earlier decision to skip `Notifiable`
+  entirely, documented in place rather than worked around with a rename
+
+### Notes:
+
+- No Controllers, Services, or Repositories exist yet — Sprint 0's remaining scope
+  (Sanctum auth skeleton, CORS lockdown, global exception handler,
+  `config/skillswap.php` boot-time validation) is next.
+- The "one file at a time, plan before code, explicit review" workflow with DeepSeek is
+  working well and will continue for the rest of the project.
+
+### Folder Tree:
+
+```
+skillswap/
+├── client/
+│   ├── .env.local.example
+│   └── nextjs/                    ← Next.js 16 app (scaffolded, no custom code yet)
+├── server/
+│   ├── .env.example
+│   └── laravel/                   ← Laravel 13 app
+│       └── app/
+│           ├── Enums/
+│           │   ├── UserRole.php
+│           │   ├── SkillCategory.php
+│           │   ├── ProficiencyLevel.php
+│           │   ├── SkillRequestStatus.php
+│           │   ├── NotificationType.php
+│           │   └── MessageType.php
+│           └── Models/
+│               ├── User.php               (replaces Laravel default)
+│               ├── Skill.php
+│               ├── UserSkill.php
+│               ├── SkillRequest.php
+│               ├── Conversation.php
+│               ├── Message.php
+│               ├── Review.php
+│               ├── Notification.php
+│               └── AuditLog.php
+├── docker/
+│   ├── docker-compose.yml
+│   ├── Dockerfile.server
+│   └── Dockerfile.client
+├── docs/
+│   ├── SKILLSWAP.md
+│   ├── STATUS.md
+│   └── DECISIONS.md
+└── .gitignore
+```
 
 ---
 
