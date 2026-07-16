@@ -5,7 +5,7 @@
 
 ---
 
-## Sprint 0 — Enums & Models (July 13, 2026)
+## Sprint 0 — Enums & Models (July 15, 2026)
 
 ### Decision: `$fillable` allow-list on every Model, even Admin-only or internal-only ones
 
@@ -23,7 +23,7 @@ touched by direct user input at all — for those, the allow-list costs nothing 
 documents intent for anyone reading the model cold, even though the stricter threat
 model isn't technically required there.
 
-**Date:** July 13, 2026
+**Date:** July 15, 2026
 
 ---
 
@@ -47,7 +47,7 @@ Services retain full write access to fields they legitimately own. Chosen over
 and why, matching SKILLSWAP.md's general preference for explicitness over bundled
 convenience (same spirit as the "One Atomic Write" rule).
 
-**Date:** July 13, 2026
+**Date:** July 15, 2026
 
 ---
 
@@ -67,7 +67,7 @@ than through our own Service/Repository layer — violating the "all business lo
 lives in Services" rule and introducing side effects (`NotificationSent` events firing
 from a trait) outside our own architecture.
 
-**Date:** July 13, 2026
+**Date:** July 15, 2026
 
 ---
 
@@ -88,7 +88,7 @@ confuse someone reading the codebase cold than a collision that can't occur in
 practice. Mitigated instead with an explicit docblock on the model itself, warning
 future readers (human or AI) not to "fix" the shared name without this context.
 
-**Date:** July 13, 2026
+**Date:** July 15, 2026
 
 ---
 
