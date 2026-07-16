@@ -8,7 +8,6 @@ use App\Exceptions\DomainValidationException;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Sanctum\NewAccessToken;
 
 class AuthService
 {
@@ -64,5 +63,35 @@ class AuthService
             'user'  => $user,
             'token' => $token->plainTextToken,
         ];
+    }
+
+    /**
+     * Revoke the current access token.
+     */
+    public function logout(User $user): void
+    {
+        $user->currentAccessToken()->delete();
+    }
+
+    /**
+     * Rotate the current token — revoke the old one and issue a new one.
+     */
+    public function refresh(User $user): array
+    {
+        $user->currentAccessToken()->delete();
+
+        $token = $user->createToken('auth_token');
+
+        return [
+            'token' => $token->plainTextToken,
+        ];
+    }
+
+    /**
+     * Return the authenticated user's full model.
+     */
+    public function me(User $user): User
+    {
+        return $user;
     }
 }
