@@ -4,15 +4,136 @@
 
 ---
 
-## Current Sprint: 0 (Foundation — Enums, Models, Auth Skeleton Pending)
+## Current Sprint: 1 (Email Verification, Password Reset, CI)
 
-## Last Updated: July 13, 2026
+## Last Updated: July 16, 2026
+
+---
+
+## Sprint 0 — Auth Skeleton & Config (July 16, 2026)
+
+### Status: SPRINT 0 COMPLETE — Enums, Models, config, exception handler, CORS, and auth skeleton all done. Sprint 1 (email verification, password reset, CI) is next.
+
+### Config & Foundation (completed this session):
+
+- `config/skillswap.php` — all six SkillSwap config values centralized, env-driven with
+  defaults
+- `ConfigServiceProvider` — boot-time validation refuses to start in non-local
+  environments if any required env var is missing (matches SKILLSWAP.md's "app refuses
+  to boot" rule)
+- `DomainValidationException` — custom exception carrying machine-readable error codes
+  and HTTP status, thrown by Services for business rule violations
+- `App\Exceptions\Handler` (overwritten) — catches `DomainValidationException`,
+  `ValidationException`, `ModelNotFoundException`, `NotFoundHttpException`,
+  `AuthenticationException`, `AuthorizationException`, and a catch-all; all rendered
+  through `ApiResponseTrait`'s standard error envelope; stack traces never exposed in
+  any environment
+- `ApiResponseTrait` — success/error JSON envelope methods used by all Controllers and
+  the exception handler, matching SKILLSWAP.md's exact shape
+- `config/cors.php` (overwritten) — locked to `FRONTEND_URL`, supports credentials for
+  Sanctum
+- `config/auth.php` — added `api` guard with `sanctum` driver (was missing — defaults
+  only had web/session)
+- `bootstrap/app.php` — added api route file registration (was missing —
+  `routes/api.php` wasn't loaded)
+- `config/sanctum.php` — not published (Sanctum in Laravel 13 has no publishable
+  config); defaults handle stateless Bearer token auth correctly
+
+### Auth Skeleton (completed this session):
+
+- `UserRepository` — `findByEmail`, `findById`, `create` (data access only, no business
+  logic)
+- `AuthService` — `register` (duplicate email check → `EMAIL_ALREADY_EXISTS`), `login`
+  (credential validation → `INVALID_CREDENTIALS`), `logout` (revoke current token),
+  `refresh` (rotate token), `me` (return authenticated user); all business rules
+  enforced here
+- `RegisterUserRequest` — name/email/password/optional location validation
+- `LoginUserRequest` — email/password validation
+- `AuthController` — `register` (201), `login` (200), `logout` (204), `refresh` (200),
+  `me` (200); no business logic, calls `AuthService`, returns via `ApiResponseTrait`
+- `routes/api.php` — public: register, login; protected (`auth:sanctum`): logout,
+  refresh, me; all under `api/v1/auth`
+
+### Auth skeleton verified:
+
+`php artisan route:list -v` confirmed all 5 auth routes registered with correct
+middleware — register/login use `api` middleware only, logout/refresh/me use `api` +
+`auth:sanctum`.
+
+### Notes:
+
+- Sanctum uses stateless Bearer tokens (Authorization header) — no SPA/cookie-based
+  auth, consistent with Next.js as a separate frontend
+- No email verification or password reset yet — those are Sprint 1
+- No rate limiting middleware applied yet — rate limits defined in SKILLSWAP.md,
+  implementation is Sprint 1 work
+- `ApiResponseTrait` error response includes `timestamp` using
+  `now()->toIso8601String()`, matching the spec's format exactly
+
+### Folder Tree:
+
+```
+skillswap/
+├── client/
+│   ├── .env.local.example
+│   └── nextjs/                    ← Next.js 16 app (scaffolded, no custom code yet)
+├── server/
+│   ├── .env.example
+│   └── laravel/                   ← Laravel 13 app
+│       └── app/
+│           ├── Enums/
+│           │   ├── UserRole.php
+│           │   ├── SkillCategory.php
+│           │   ├── ProficiencyLevel.php
+│           │   ├── SkillRequestStatus.php
+│           │   ├── NotificationType.php
+│           │   └── MessageType.php
+│           ├── Models/
+│           │   ├── User.php               (replaces Laravel default)
+│           │   ├── Skill.php
+│           │   ├── UserSkill.php
+│           │   ├── SkillRequest.php
+│           │   ├── Conversation.php
+│           │   ├── Message.php
+│           │   ├── Review.php
+│           │   ├── Notification.php
+│           │   └── AuditLog.php
+│           ├── Http/
+│           │   ├── Controllers/
+│           │   │   └── AuthController.php
+│           │   └── Requests/
+│           │       ├── RegisterUserRequest.php
+│           │       └── LoginUserRequest.php
+│           ├── Services/
+│           │   └── AuthService.php
+│           ├── Repositories/
+│           │   └── UserRepository.php
+│           ├── Exceptions/
+│           │   └── DomainValidationException.php
+│           ├── Traits/
+│           │   └── ApiResponseTrait.php
+│           └── Providers/
+│               └── ConfigServiceProvider.php
+├── docker/
+│   ├── docker-compose.yml
+│   ├── Dockerfile.server
+│   └── Dockerfile.client
+├── docs/
+│   ├── SKILLSWAP.md
+│   ├── STATUS.md
+│   └── DECISIONS.md
+└── .gitignore
+```
+
+(`config/skillswap.php`, `config/cors.php`, `config/auth.php`, `bootstrap/app.php`, and
+`routes/api.php` all updated in place this session — not shown as new tree entries
+since they pre-existed as Laravel scaffold files.)
 
 ---
 
 ## Sprint 0 — Enums & Models (July 13, 2026)
 
-### Status: COMPLETE — All 6 enums and all 9 models written, reviewed, committed. Auth skeleton, CORS, global exception handler, and `config/skillswap.php` boot-time validation still pending before Sprint 0 closes.
+### Status: COMPLETE — All 6 enums and all 9 models written, reviewed, committed.
 
 ### Workflow change this session:
 
@@ -84,9 +205,6 @@ with the second enum onward.
 
 ### Notes:
 
-- No Controllers, Services, or Repositories exist yet — Sprint 0's remaining scope
-  (Sanctum auth skeleton, CORS lockdown, global exception handler,
-  `config/skillswap.php` boot-time validation) is next.
 - The "one file at a time, plan before code, explicit review" workflow with DeepSeek is
   working well and will continue for the rest of the project.
 

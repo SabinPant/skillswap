@@ -23,3 +23,7 @@ server/laravel/bootstrap/cache/*.php
 # Next.js build output
 client/nextjs/.next/
 client/nextjs/out/
+
+
+
+docs/

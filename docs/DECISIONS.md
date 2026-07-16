@@ -5,6 +5,66 @@
 
 ---
 
+## Sprint 0 — Auth Skeleton & Config (July 16, 2026)
+
+### Decision: Stateless Sanctum tokens only — no SPA/cookie-based auth
+
+**Instead of:** Enabling Sanctum's cookie-based SPA authentication alongside API tokens,
+which is Laravel's default when `SANCTUM_STATEFUL_DOMAINS` is set.
+
+**Because:** The Next.js frontend is a fully separate application, not a Laravel SPA.
+All auth goes through the `api` guard with the `sanctum` driver, using Bearer tokens
+in the `Authorization` header. `SANCTUM_STATEFUL_DOMAINS` remains set in `.env` for
+future flexibility (e.g., an admin dashboard served from the same domain), but no
+cookie-based routes or middleware were configured.
+
+**Date:** July 16, 2026
+
+---
+
+### Decision: No published `config/sanctum.php` — rely on Laravel 13 Sanctum defaults
+
+**Instead of:** Publishing Sanctum's config file and customizing it, as was necessary
+in older Laravel versions.
+
+**Because:** Laravel 13's Sanctum package has no publishable config file — the
+`vendor:publish` command returns "No publishable resources for tag []." The package's
+internal defaults handle stateless Bearer token authentication correctly without any
+additional configuration. Publishing a config that doesn't exist would mean manually
+creating one, which introduces a maintenance burden for zero gain.
+
+**Date:** July 16, 2026
+
+---
+
+### Decision: Explicitly register `routes/api.php` in `bootstrap/app.php`
+
+**Instead of:** Relying on Laravel's default route loading, which in Laravel 13
+requires an explicit `api:` key in the `withRouting()` call.
+
+**Because:** Laravel 13's `bootstrap/app.php` does not auto-discover `routes/api.php`
+— only `web.php`, `console.php`, and `channels.php` were registered by default.
+Without explicitly adding the `api:` entry, `php artisan route:list` showed zero API
+routes despite the file existing. This is a Laravel 13-specific change from earlier
+versions that auto-loaded all route files.
+
+**Date:** July 16, 2026
+
+---
+
+### Decision: Error response timestamps use ISO 8601 with milliseconds
+
+**Instead of:** Using Laravel's default `now()->toISOString()` or Unix timestamps.
+
+**Because:** SKILLSWAP.md's standard error envelope explicitly shows the timestamp
+format as `"2026-07-11T09:30:00.000Z"` — ISO 8601 with milliseconds and a trailing Z.
+`now()->toIso8601String()` produces exactly this format, matching the spec character
+for character. `toISOString()` was close but omitted the Z suffix.
+
+**Date:** July 16, 2026
+
+---
+
 ## Sprint 0 — Enums & Models (July 15, 2026)
 
 ### Decision: `$fillable` allow-list on every Model, even Admin-only or internal-only ones
