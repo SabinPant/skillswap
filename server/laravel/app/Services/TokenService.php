@@ -15,18 +15,20 @@ use Illuminate\Support\Str;
  */
 class TokenService
 {
+    public const TOKEN_LENGTH = 64;
+
     /**
      * Generate a single-use token and store its hash in Redis.
      *
-     * @param string $prefix    Redis key prefix (e.g. 'email:verify', 'email:reset').
-     * @param string $userId    The user this token belongs to.
+     * @param string $prefix     Redis key prefix (e.g. 'email:verify', 'email:reset').
+     * @param string $userId     The user this token belongs to.
      * @param int    $ttlSeconds Time-to-live in seconds.
      *
      * @return string The raw token to send to the user (not the hash).
      */
     public function generate(string $prefix, string $userId, int $ttlSeconds): string
     {
-        $rawToken = Str::random(64);
+        $rawToken = Str::random(self::TOKEN_LENGTH);
         $hash     = hash('sha256', $rawToken);
 
         Redis::setex("{$prefix}:{$hash}", $ttlSeconds, $userId);
