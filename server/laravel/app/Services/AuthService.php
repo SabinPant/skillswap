@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\DomainValidationException;
+use App\Jobs\SendEmailVerificationJob;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Hash;
@@ -13,10 +14,11 @@ class AuthService
 {
     public function __construct(
         private readonly UserRepository $userRepository,
+        private readonly TokenService $tokenService,
     ) {}
 
     /**
-     * Register a new user and return an access token.
+     * Register a new user, dispatch email verification, and return an access token.
      *
      * @throws DomainValidationException If the email is already registered.
      */
@@ -31,6 +33,10 @@ class AuthService
         }
 
         $user = $this->userRepository->create($data);
+
+        // Generate a single-use verification token (24h TTL) and queue the email.
+        $rawToken = $this->tokenService->generate('email:verify', $user->id, 86400);
+        SendEmailVerificationJob::dispatch($user, $rawToken);
 
         $token = $user->createToken('auth_token');
 
