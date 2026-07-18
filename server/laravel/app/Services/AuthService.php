@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\DomainValidationException;
+use App\Exceptions\NotFoundException;
 use App\Jobs\SendEmailVerificationJob;
 use App\Models\User;
 use App\Repositories\UserRepository;
@@ -112,8 +113,8 @@ class AuthService
     /**
      * Verify a user's email using a single-use verification token.
      *
-     * @throws DomainValidationException If the token is invalid or expired,
-     *                                   or if the user no longer exists.
+     * @throws DomainValidationException If the token is invalid or expired.
+     * @throws NotFoundException         If the user no longer exists.
      */
     public function verifyEmail(string $rawToken): User
     {
@@ -130,12 +131,7 @@ class AuthService
         $user = $this->userRepository->findById($userId);
 
         if ($user === null) {
-            // Token was valid, but the user doesn't exist — possible edge case.
-            throw new DomainValidationException(
-                'User not found.',
-                'NOT_FOUND',
-                404,
-            );
+            throw new NotFoundException('User not found.');
         }
 
         // If already verified (double-click), the operation is idempotent — no error.
