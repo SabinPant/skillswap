@@ -37,6 +37,16 @@ class Handler extends ExceptionHandler
             );
         }
 
+        // Resource not found (thrown explicitly by Services)
+        if ($e instanceof NotFoundException) {
+            return $this->errorResponse(
+                $e->getMessage(),
+                'NOT_FOUND',
+                [],
+                404,
+            );
+        }
+
         // Form request validation failures (422)
         if ($e instanceof ValidationException) {
             return $this->errorResponse(
