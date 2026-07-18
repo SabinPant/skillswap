@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Auth;
 
+use App\Services\TokenService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class VerifyEmailRequest extends FormRequest
@@ -22,7 +23,7 @@ class VerifyEmailRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'token' => ['required', 'string', 'size:64'],
+            'token' => ['required', 'string', 'size:' . TokenService::TOKEN_LENGTH],
         ];
     }
 }
