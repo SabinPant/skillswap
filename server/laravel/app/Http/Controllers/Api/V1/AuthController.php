@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginUserRequest;
 use App\Http\Requests\Auth\RegisterUserRequest;
+use App\Http\Requests\Auth\VerifyEmailRequest;
 use App\Services\AuthService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
@@ -68,6 +69,16 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $user = $this->authService->me($request->user());
+
+        return $this->successResponse($user);
+    }
+
+    /**
+     * Verify a user's email using a verification token.
+     */
+    public function verifyEmail(VerifyEmailRequest $request): JsonResponse
+    {
+        $user = $this->authService->verifyEmail($request->validated('token'));
 
         return $this->successResponse($user);
     }
