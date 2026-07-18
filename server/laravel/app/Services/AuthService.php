@@ -18,33 +18,41 @@ class AuthService
     ) {}
 
     /**
-     * Register a new user, dispatch email verification, and return an access token.
-     *
-     * @throws DomainValidationException If the email is already registered.
-     */
-    public function register(array $data): array
-    {
-        if ($this->userRepository->findByEmail($data['email'])) {
-            throw new DomainValidationException(
-                'This email is already registered.',
-                'EMAIL_ALREADY_EXISTS',
-                409,
-            );
-        }
+ * Register a new user, dispatch email verification, and return an access token.
+ *
+ * @throws DomainValidationException If the email is already registered.
+ */
+public function register(array $data): array
+{
+    if ($this->userRepository->findByEmail($data['email'])) {
+        throw new DomainValidationException(
+            'This email is already registered.',
+            'EMAIL_ALREADY_EXISTS',
+            409,
+        );
+    }
 
-        $user = $this->userRepository->create($data);
+    $user = $this->userRepository->create($data);
 
+    try {
         // Generate a single-use verification token (24h TTL) and queue the email.
         $rawToken = $this->tokenService->generate('email:verify', $user->id, 86400);
         SendEmailVerificationJob::dispatch($user, $rawToken);
-
-        $token = $user->createToken('auth_token');
-
-        return [
-            'user'  => $user,
-            'token' => $token->plainTextToken,
-        ];
+    } catch (\Throwable $e) {
+        // Token generation or dispatch failed — hard-delete the user so the
+        // client can retry cleanly. This is an exception to the "never hard-delete"
+        // rule: the row is milliseconds old with zero related data.
+        $user->forceDelete();
+        throw $e;
     }
+
+    $token = $user->createToken('auth_token');
+
+    return [
+        'user'  => $user,
+        'token' => $token->plainTextToken,
+    ];
+}
 
     /**
      * Authenticate a user by email and password.
