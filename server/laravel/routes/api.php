@@ -16,6 +16,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
 
         // Auth — protected (requires valid Sanctum token)
         Route::middleware('auth:sanctum')->group(function () {
