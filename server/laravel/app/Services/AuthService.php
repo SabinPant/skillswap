@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Exceptions\DomainValidationException;
 use App\Exceptions\NotFoundException;
 use App\Jobs\SendEmailVerificationJob;
+use App\Jobs\SendPasswordResetEmailJob;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Hash;
@@ -141,5 +142,50 @@ class AuthService
         }
 
         return $user;
+    }
+
+    /**
+     * Send a password reset email if the given email belongs to a user.
+     *
+     * Silently succeeds when the email is not found to prevent
+     * user enumeration attacks.
+     */
+    public function forgotPassword(string $email): void
+    {
+        $user = $this->userRepository->findByEmail($email);
+
+        if ($user === null) {
+            return;
+        }
+
+        $rawToken = $this->tokenService->generate('email:reset', $user->id, 3600);
+        SendPasswordResetEmailJob::dispatch($user, $rawToken);
+    }
+
+    /**
+     * Reset a user's password using a single-use reset token.
+     *
+     * @throws DomainValidationException If the token is invalid or expired.
+     */
+    public function resetPassword(string $rawToken, string $newPassword): void
+    {
+        $userId = $this->tokenService->verify('email:reset', $rawToken);
+
+        if ($userId === null) {
+            throw new DomainValidationException(
+                'Invalid or expired reset token.',
+                'INVALID_RESET_TOKEN',
+                400,
+            );
+        }
+
+        $user = $this->userRepository->findById($userId);
+
+        if ($user === null) {
+            throw new NotFoundException('User not found.');
+        }
+
+        $user->password = $newPassword;
+        $user->save();
     }
 }
