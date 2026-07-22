@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -116,5 +117,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 'timestamp' => now()->toIso8601String(),
                 'errors'    => [],
             ], 403);
+        });
+
+        // Rate limit exceeded (429)
+        $exceptions->renderable(function (ThrottleRequestsException $e) {
+            return response()->json([
+                'success'   => false,
+                'message'   => 'Too many requests. Please try again later.',
+                'code'      => 'RATE_LIMIT_EXCEEDED',
+                'timestamp' => now()->toIso8601String(),
+                'errors'    => [],
+            ], 429);
         });
     })->create();
