@@ -14,14 +14,21 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
     // Auth — public
     Route::prefix('auth')->group(function () {
-        Route::post('/register', [AuthController::class, 'register']);
-        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/register', [AuthController::class, 'register'])
+            ->middleware('throttle:register');
+
+        Route::post('/login', [AuthController::class, 'login'])
+            ->middleware('throttle:login');
+
         Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
-        Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+            ->middleware('throttle:forgot-password');
+
         Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
-        // Auth — protected (requires valid Sanctum token)
-        Route::middleware('auth:sanctum')->group(function () {
+        // Auth — protected (requires valid Sanctum token + default rate limit)
+        Route::middleware(['throttle:default', 'auth:sanctum'])->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::post('/refresh', [AuthController::class, 'refresh']);
             Route::get('/me', [AuthController::class, 'me']);
