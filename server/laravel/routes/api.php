@@ -41,5 +41,7 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware(['throttle:default', 'auth:sanctum'])->group(function () {
         Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::post('/users/{id}/avatar', [UserController::class, 'uploadAvatar'])
+            ->middleware('throttle:avatar-upload');
     });
 });
