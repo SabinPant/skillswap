@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,5 +34,12 @@ Route::prefix('v1')->group(function () {
             Route::post('/refresh', [AuthController::class, 'refresh']);
             Route::get('/me', [AuthController::class, 'me']);
         });
+    });
+
+    // Users
+    Route::get('/users/{id}', [UserController::class, 'show']);
+
+    Route::middleware(['throttle:default', 'auth:sanctum'])->group(function () {
+        Route::put('/users/{id}', [UserController::class, 'update']);
     });
 });
