@@ -11,6 +11,7 @@ use App\Traits\ApiResponseTrait;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\User\AvatarUploadRequest;
 
 class UserController extends Controller
 {
@@ -45,6 +46,25 @@ class UserController extends Controller
         }
 
         $user = $this->userService->updateProfile($authUser, $request->validated());
+
+        return $this->successResponse($user);
+    }
+
+        /**
+     * Upload a new avatar for the authenticated user.
+     *
+     * @throws AuthorizationException If the user tries to update another user's avatar.
+     */
+    public function uploadAvatar(AvatarUploadRequest $request, string $id): JsonResponse
+    {
+        /** @var \App\Models\User $authUser */
+        $authUser = $request->user();
+
+        if ($authUser->id !== $id) {
+            throw new AuthorizationException('You can only update your own avatar.');
+        }
+
+        $user = $this->userService->uploadAvatar($authUser, $request->file('avatar'));
 
         return $this->successResponse($user);
     }
