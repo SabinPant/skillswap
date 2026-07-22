@@ -30,79 +30,79 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         // Business rule violations from Services
-        $exceptions->map(DomainValidationException::class, fn (DomainValidationException $e) =>
-            response()->json([
+        $exceptions->renderable(function (DomainValidationException $e) {
+            return response()->json([
                 'success'   => false,
                 'message'   => $e->getMessage(),
                 'code'      => $e->getCode() ?: 'VALIDATION_ERROR',
                 'timestamp' => now()->toIso8601String(),
                 'errors'    => [],
-            ], $e->httpStatus)
-        );
+            ], $e->httpStatus);
+        });
 
         // Resource not found (thrown explicitly by Services)
-        $exceptions->map(NotFoundException::class, fn (NotFoundException $e) =>
-            response()->json([
+        $exceptions->renderable(function (NotFoundException $e) {
+            return response()->json([
                 'success'   => false,
                 'message'   => $e->getMessage(),
                 'code'      => 'NOT_FOUND',
                 'timestamp' => now()->toIso8601String(),
                 'errors'    => [],
-            ], 404)
-        );
+            ], 404);
+        });
 
         // Form request validation failures (422)
-        $exceptions->map(ValidationException::class, fn (ValidationException $e) =>
-            response()->json([
+        $exceptions->renderable(function (ValidationException $e) {
+            return response()->json([
                 'success'   => false,
                 'message'   => 'The given data was invalid.',
                 'code'      => 'VALIDATION_ERROR',
                 'timestamp' => now()->toIso8601String(),
                 'errors'    => $e->errors(),
-            ], 422)
-        );
+            ], 422);
+        });
 
         // Eloquent findOrFail (404)
-        $exceptions->map(ModelNotFoundException::class, fn (ModelNotFoundException $e) =>
-            response()->json([
+        $exceptions->renderable(function (ModelNotFoundException $e) {
+            return response()->json([
                 'success'   => false,
                 'message'   => 'Resource not found.',
                 'code'      => 'NOT_FOUND',
                 'timestamp' => now()->toIso8601String(),
                 'errors'    => [],
-            ], 404)
-        );
+            ], 404);
+        });
 
         // Route not found (404)
-        $exceptions->map(NotFoundHttpException::class, fn (NotFoundHttpException $e) =>
-            response()->json([
+        $exceptions->renderable(function (NotFoundHttpException $e) {
+            return response()->json([
                 'success'   => false,
                 'message'   => 'The requested endpoint was not found.',
                 'code'      => 'NOT_FOUND',
                 'timestamp' => now()->toIso8601String(),
                 'errors'    => [],
-            ], 404)
-        );
+            ], 404);
+        });
 
         // Unauthenticated (401)
-        $exceptions->map(AuthenticationException::class, fn (AuthenticationException $e) =>
-            response()->json([
+        $exceptions->renderable(function (AuthenticationException $e) {
+            return response()->json([
                 'success'   => false,
                 'message'   => 'Unauthenticated.',
                 'code'      => 'UNAUTHENTICATED',
                 'timestamp' => now()->toIso8601String(),
                 'errors'    => [],
-            ], 401)
-        );
+            ], 401);
+        });
 
         // Forbidden (403)
-        $exceptions->map(AuthorizationException::class, fn (AuthorizationException $e) =>
-            response()->json([
+        $exceptions->renderable(function (AuthorizationException $e) {
+            return response()->json([
                 'success'   => false,
                 'message'   => 'Insufficient permissions.',
                 'code'      => 'INSUFFICIENT_PERMISSIONS',
                 'timestamp' => now()->toIso8601String(),
                 'errors'    => [],
-            ], 403)
-        );
+            ], 403);
+        });
     })->create();
