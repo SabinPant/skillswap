@@ -1,5 +1,7 @@
 <?php
 
+use App\Exceptions\DomainValidationException;
+use App\Exceptions\NotFoundException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -8,9 +10,8 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use App\Exceptions\DomainValidationException;
-use App\Exceptions\NotFoundException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -100,6 +101,17 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'success'   => false,
                 'message'   => 'Insufficient permissions.',
+                'code'      => 'INSUFFICIENT_PERMISSIONS',
+                'timestamp' => now()->toIso8601String(),
+                'errors'    => [],
+            ], 403);
+        });
+
+        // Forbidden — converted from AuthorizationException by Laravel's pipeline (403)
+        $exceptions->renderable(function (AccessDeniedHttpException $e) {
+            return response()->json([
+                'success'   => false,
+                'message'   => $e->getMessage() ?: 'Insufficient permissions.',
                 'code'      => 'INSUFFICIENT_PERMISSIONS',
                 'timestamp' => now()->toIso8601String(),
                 'errors'    => [],
