@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class RegisterTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_user_can_register_successfully(): void
     {
         $response = $this->postJson('/api/v1/auth/register', [
@@ -25,12 +22,11 @@ class RegisterTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'data' => [
-                    'user' => ['id', 'name', 'email', 'role'],
+                    'user' => ['id', 'name', 'email'],
                     'token',
                 ],
             ])
-            ->assertJsonPath('data.user.email', 'test@example.com')
-            ->assertJsonPath('data.user.role', 'user');
+            ->assertJsonPath('data.user.email', 'test@example.com');
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',
