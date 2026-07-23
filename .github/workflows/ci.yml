@@ -10,13 +10,13 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
-  env:
-    DB_HOST: localhost
-    REDIS_HOST: localhost
+    env:
+      DB_HOST: localhost
+      REDIS_HOST: localhost
 
-  defaults:
-    run:
-    working-directory: server/laravel
+    defaults:
+      run:
+        working-directory: server/laravel
 
     services:
       postgres:
@@ -58,8 +58,6 @@ jobs:
       - name: Create .env
         run: |
           cp .env.testing .env
-          echo "DB_HOST=localhost" >> .env
-          echo "REDIS_HOST=localhost" >> .env
           php artisan key:generate
 
       - name: Run migrations
