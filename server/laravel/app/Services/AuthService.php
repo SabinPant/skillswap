@@ -35,6 +35,7 @@ class AuthService
         }
 
         $user = $this->userRepository->create($data);
+        $user->refresh();
 
         try {
             // Generate a single-use verification token (24h TTL) and queue the email.

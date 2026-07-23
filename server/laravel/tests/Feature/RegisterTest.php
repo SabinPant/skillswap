@@ -22,7 +22,7 @@ class RegisterTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'data' => [
-                    'user' => ['id', 'name', 'email'],
+                    'user' => ['id', 'name', 'email', 'role'],
                     'token',
                 ],
             ])
