@@ -114,4 +114,16 @@ class AuthController extends Controller
             data: ['message' => 'Password reset successfully.'],
         );
     }
+
+    /**
+     * Resend the verification email for the authenticated user.
+     */
+    public function resendVerification(Request $request): JsonResponse
+    {
+        $this->authService->resendVerification($request->user());
+
+        return $this->successResponse(
+            data: ['message' => 'Verification email resent.'],
+        );
+    }
 }
