@@ -189,4 +189,27 @@ class AuthService
         $user->password = $newPassword;
         $user->save();
     }
+
+    /**
+     * Resend a verification email for the authenticated user.
+     *
+     * The previous verification token is not explicitly revoked —
+     * it harmlessly expires via its own Redis TTL, following the
+     * "One Atomic Write" rule in SKILLSWAP.md.
+     *
+     * @throws DomainValidationException If the email is already verified.
+     */
+    public function resendVerification(User $user): void
+    {
+        if ($user->email_verified_at !== null) {
+            throw new DomainValidationException(
+                'Email is already verified.',
+                'EMAIL_ALREADY_VERIFIED',
+                409,
+            );
+        }
+
+        $rawToken = $this->tokenService->generate('email:verify', $user->id, 86400);
+        SendEmailVerificationJob::dispatch($user, $rawToken);
+    }
 }
