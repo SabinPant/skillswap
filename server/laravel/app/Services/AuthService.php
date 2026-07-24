@@ -11,18 +11,36 @@ use App\Jobs\SendPasswordResetEmailJob;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Hash;
+use Throwable;
 
+/**
+ * Class AuthService
+ *
+ * Handles core authentication logic, user registration, token management,
+ * and account recovery processes.
+ */
 class AuthService
 {
+    /**
+     * AuthService constructor.
+     *
+     * @param UserRepository $userRepository
+     * @param TokenService   $tokenService
+     */
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly TokenService $tokenService,
     ) {}
 
     /**
-     * Register a new user, dispatch email verification, and return an access token.
+     * Registers a new user, dispatches the email verification job, 
+     * and returns an access token.
+     *
+     * @param array<string, mixed> $data The user registration payload.
+     * @return array{user: User, token: string}
      *
      * @throws DomainValidationException If the email is already registered.
+     * @throws Throwable If token generation or email dispatch fails.
      */
     public function register(array $data): array
     {
@@ -30,7 +48,7 @@ class AuthService
             throw new DomainValidationException(
                 'This email is already registered.',
                 'EMAIL_ALREADY_EXISTS',
-                409,
+                409
             );
         }
 
@@ -41,15 +59,20 @@ class AuthService
             // Generate a single-use verification token (24h TTL) and queue the email.
             $rawToken = $this->tokenService->generate('email:verify', $user->id, 86400);
             SendEmailVerificationJob::dispatch($user, $rawToken);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Token generation or dispatch failed — hard-delete the user so the
             // client can retry cleanly. This is an exception to the "never hard-delete"
             // rule: the row is milliseconds old with zero related data.
             $user->forceDelete();
+            
             throw $e;
         }
 
-        $token = $user->createToken('auth_token');
+        $token = $user->createToken(
+            'auth_token',
+            ['*'],
+            now()->addDays((int) config('skillswap.token_expiry_days'))
+        );
 
         return [
             'user'  => $user,
@@ -58,7 +81,11 @@ class AuthService
     }
 
     /**
-     * Authenticate a user by email and password.
+     * Authenticates a user by email and password.
+     *
+     * @param string $email
+     * @param string $password
+     * @return array{user: User, token: string}
      *
      * @throws DomainValidationException If credentials are invalid.
      */
@@ -70,11 +97,15 @@ class AuthService
             throw new DomainValidationException(
                 'Invalid email or password.',
                 'INVALID_CREDENTIALS',
-                401,
+                401
             );
         }
 
-        $token = $user->createToken('auth_token');
+        $token = $user->createToken(
+            'auth_token',
+            ['*'],
+            now()->addDays((int) config('skillswap.token_expiry_days'))
+        );
 
         return [
             'user'  => $user,
@@ -83,7 +114,10 @@ class AuthService
     }
 
     /**
-     * Revoke the current access token.
+     * Revokes the current access token for the authenticated user.
+     *
+     * @param User $user
+     * @return void
      */
     public function logout(User $user): void
     {
@@ -91,13 +125,22 @@ class AuthService
     }
 
     /**
-     * Rotate the current token — revoke the old one and issue a new one.
+     * Rotates the current access token — revokes the old one and issues a new one 
+     * while preserving the original expiration time.
+     *
+     * @param User $user
+     * @return array{token: string}
      */
     public function refresh(User $user): array
     {
-        $user->currentAccessToken()->delete();
+        $oldToken = $user->currentAccessToken();
+        
+        // Preserve absolute lifetime
+        $expiresAt = $oldToken->expires_at; 
 
-        $token = $user->createToken('auth_token');
+        $oldToken->delete();
+
+        $token = $user->createToken('auth_token', ['*'], $expiresAt);
 
         return [
             'token' => $token->plainTextToken,
@@ -105,7 +148,10 @@ class AuthService
     }
 
     /**
-     * Return the authenticated user's full model.
+     * Retrieves the authenticated user's full model instance.
+     *
+     * @param User $user
+     * @return User
      */
     public function me(User $user): User
     {
@@ -113,7 +159,10 @@ class AuthService
     }
 
     /**
-     * Verify a user's email using a single-use verification token.
+     * Verifies a user's email using a single-use verification token.
+     *
+     * @param string $rawToken
+     * @return User
      *
      * @throws DomainValidationException If the token is invalid or expired.
      * @throws NotFoundException         If the user no longer exists.
@@ -126,7 +175,7 @@ class AuthService
             throw new DomainValidationException(
                 'Invalid or expired verification token.',
                 'INVALID_VERIFICATION_TOKEN',
-                400,
+                400
             );
         }
 
@@ -146,27 +195,37 @@ class AuthService
     }
 
     /**
-     * Send a password reset email if the given email belongs to a user.
-     *
-     * Silently succeeds when the email is not found to prevent
+     * Sends a password reset email if the given email belongs to an existing user.
+     * 
+     * Note: This method silently succeeds when the email is not found to prevent
      * user enumeration attacks.
+     *
+     * @param string $email
+     * @return void
      */
     public function forgotPassword(string $email): void
     {
         $user = $this->userRepository->findByEmail($email);
 
         if ($user === null) {
-            return;
+            return; // Fail silently
         }
 
         $rawToken = $this->tokenService->generate('email:reset', $user->id, 3600);
+        
         SendPasswordResetEmailJob::dispatch($user, $rawToken);
     }
 
     /**
-     * Reset a user's password using a single-use reset token.
+     * Resets a user's password using a single-use reset token and revokes 
+     * all active sessions.
+     *
+     * @param string $rawToken
+     * @param string $newPassword
+     * @return void
      *
      * @throws DomainValidationException If the token is invalid or expired.
+     * @throws NotFoundException         If the user no longer exists.
      */
     public function resetPassword(string $rawToken, string $newPassword): void
     {
@@ -176,7 +235,7 @@ class AuthService
             throw new DomainValidationException(
                 'Invalid or expired reset token.',
                 'INVALID_RESET_TOKEN',
-                400,
+                400
             );
         }
 
@@ -187,15 +246,22 @@ class AuthService
         }
 
         $user->password = $newPassword;
+        
+        // Invalidate all existing sessions/tokens upon password reset
+        $user->tokens()->delete();
+        
         $user->save();
     }
 
     /**
-     * Resend a verification email for the authenticated user.
+     * Resends a verification email for the authenticated user.
      *
      * The previous verification token is not explicitly revoked —
      * it harmlessly expires via its own Redis TTL, following the
      * "One Atomic Write" rule in SKILLSWAP.md.
+     *
+     * @param User $user
+     * @return void
      *
      * @throws DomainValidationException If the email is already verified.
      */
@@ -205,11 +271,12 @@ class AuthService
             throw new DomainValidationException(
                 'Email is already verified.',
                 'EMAIL_ALREADY_VERIFIED',
-                409,
+                409
             );
         }
 
         $rawToken = $this->tokenService->generate('email:verify', $user->id, 86400);
+        
         SendEmailVerificationJob::dispatch($user, $rawToken);
     }
 }

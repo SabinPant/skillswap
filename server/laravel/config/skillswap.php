@@ -11,6 +11,7 @@ return [
     'rating_cache_ttl_minutes'      => env('RATING_CACHE_TTL_MINUTES', 60),
     'admin_email'                   => env('ADMIN_EMAIL', 'admin@skillswap.test'),
     'admin_password'                => env('ADMIN_PASSWORD', 'CHANGE_ME_BEFORE_SEEDING'),
+    'token_expiry_days'             => (int) env('SANCTUM_TOKEN_EXPIRY_DAYS', 7),
 
     'rate_limits' => [
         'login' => [
