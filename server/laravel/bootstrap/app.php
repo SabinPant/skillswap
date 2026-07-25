@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Database\QueryException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -129,4 +130,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 'errors'    => [],
             ], 429);
         });
+
+        // Foreign key violation — typically from deleting a skill still in use (409)
+        $exceptions->renderable(function (QueryException $e) {
+            if ($e->getCode() === '23503') {
+                return response()->json([
+                    'success'   => false,
+                    'message'   => 'Cannot delete this resource — it is still referenced by other data.',
+                    'code'      => 'SKILL_IN_USE',
+                    'timestamp' => now()->toIso8601String(),
+                    'errors'    => [],
+                ], 409);
+            }
+        });
+
     })->create();
