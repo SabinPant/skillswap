@@ -144,4 +144,17 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        // Unique constraint violation — typically from slug collision (409)
+        $exceptions->renderable(function (QueryException $e) {
+            if ($e->getCode() === '23505') {
+                return response()->json([
+                    'success'   => false,
+                    'message'   => 'A resource with this value already exists.',
+                    'code'      => 'RESOURCE_ALREADY_EXISTS',
+                    'timestamp' => now()->toIso8601String(),
+                    'errors'    => [],
+                ], 409);
+            }
+        });
+
     })->create();
