@@ -11,11 +11,12 @@ use Illuminate\Database\Eloquent\Collection;
 class UserSkillRepository
 {
     /**
-     * Find a UserSkill by its UUID.
+     * Find a UserSkill by its UUID, scoped to the given user.
+     * Returns null if not found or if the row belongs to a different user.
      */
-    public function findById(string $id): ?UserSkill
+    public function findByIdForUser(string $id, User $user): ?UserSkill
     {
-        return UserSkill::find($id);
+        return $user->userSkills()->find($id);
     }
 
     /**
@@ -57,6 +58,6 @@ class UserSkillRepository
      */
     public function findByUser(User $user): Collection
     {
-        return $user->userSkills()->with('skill')->get();
+        return $user->userSkills()->with('skill')->orderBy('created_at')->get();
     }
 }
