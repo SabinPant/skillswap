@@ -158,8 +158,11 @@ class UserSkillTest extends TestCase
         $response->assertStatus(404);
     }
 
-    public function test_list_user_skills(): void
+        public function test_list_user_skills(): void
     {
+        // Remove any UserSkills created by previous tests
+        $this->user->userSkills()->delete();
+
         UserSkill::factory()
             ->for($this->user)
             ->for($this->skill)
