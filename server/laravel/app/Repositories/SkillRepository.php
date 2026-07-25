@@ -31,6 +31,14 @@ class SkillRepository
     }
 
     /**
+     * Get all skills ordered alphabetically by name.
+     */
+    public function getAllOrderedByName(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Skill::orderBy('name')->get();
+    }
+
+    /**
      * Create a new skill and return the model.
      */
     public function create(array $data): Skill
