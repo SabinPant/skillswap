@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\DomainValidationException;
+use App\Exceptions\NotFoundException;
 use App\Models\Skill;
 use App\Repositories\SkillRepository;
 use Illuminate\Support\Facades\DB;
@@ -41,14 +42,22 @@ class SkillService
     /**
      * Delete a skill if it is not referenced by any active data.
      *
+     * Uses lockForUpdate() inside a transaction to prevent
+     * race conditions with concurrent user_skills/skill_requests inserts.
+     *
      * @throws DomainValidationException If the skill is still in use.
+     * @throws NotFoundException         If the skill no longer exists.
      */
-    public function delete(Skill $skill): void
+       public function delete(Skill $skill): void
     {
         DB::transaction(function () use ($skill) {
-            $skill = $this->skillRepository->findById($skill->id);
+            $locked = $this->skillRepository->findByIdForUpdate($skill->id);
 
-            if ($this->skillRepository->isInUse($skill)) {
+            if ($locked === null) {
+                throw new NotFoundException('Skill not found.');
+            }
+
+            if ($this->skillRepository->isInUse($locked)) {
                 throw new DomainValidationException(
                     'Cannot delete this skill — it is still in use.',
                     'SKILL_IN_USE',
@@ -56,7 +65,7 @@ class SkillService
                 );
             }
 
-            $this->skillRepository->delete($skill);
+            $this->skillRepository->delete($locked);
         });
     }
 }

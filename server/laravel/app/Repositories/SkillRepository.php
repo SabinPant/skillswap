@@ -21,6 +21,15 @@ class SkillRepository
         return Skill::find($id);
     }
 
+     /**
+     * Find a skill by its UUID with a row lock for update operations.
+     * Used inside transactions to prevent race conditions during deletion.
+     */
+    public function findByIdForUpdate(string $id): ?Skill
+    {
+        return Skill::where('id', $id)->lockForUpdate()->first();
+    }
+
     /**
      * Create a new skill and return the model.
      */
