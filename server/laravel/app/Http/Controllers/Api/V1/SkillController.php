@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Skill\StoreSkillRequest;
 use App\Http\Requests\Skill\UpdateSkillRequest;
+use App\Repositories\SkillRepository;
 use App\Services\SkillService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +22,9 @@ class SkillController extends Controller
         private readonly SkillService $skillService,
     ) {}
 
+    /**
+     * List all skills in the global taxonomy.
+     */
     public function index(): JsonResponse
     {
         $skills = $this->skillRepository->getAllOrderedByName();
@@ -27,6 +32,9 @@ class SkillController extends Controller
         return $this->successResponse($skills);
     }
 
+    /**
+     * Create a new skill (Admin only).
+     */
     public function store(StoreSkillRequest $request): JsonResponse
     {
         $skill = $this->skillService->create($request->validated());
@@ -34,6 +42,9 @@ class SkillController extends Controller
         return $this->successResponse($skill, [], 201);
     }
 
+    /**
+     * Update an existing skill (Admin only).
+     */
     public function update(UpdateSkillRequest $request, string $id): JsonResponse
     {
         $skill = $this->skillRepository->findById($id);
@@ -47,6 +58,9 @@ class SkillController extends Controller
         return $this->successResponse($skill);
     }
 
+    /**
+     * Delete a skill (Admin only).
+     */
     public function destroy(string $id): JsonResponse
     {
         $skill = $this->skillRepository->findById($id);
