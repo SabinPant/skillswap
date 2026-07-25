@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\SkillController;
-
+use App\Http\Controllers\Api\V1\UserSkillController;
 /*
 |--------------------------------------------------------------------------
 | API Routes — /api/v1
@@ -64,4 +64,14 @@ Route::prefix('v1')->group(function () {
             Route::put('/{id}', [SkillController::class, 'update']);
             Route::delete('/{id}', [SkillController::class, 'destroy']);
         });
+
+    // User Skills — authenticated user's own skill listings
+    Route::middleware(['throttle:default', 'auth:sanctum'])
+        ->prefix('user-skills')
+        ->group(function () {
+            Route::get('/', [UserSkillController::class, 'index']);
+            Route::post('/', [UserSkillController::class, 'store']);
+            Route::put('/{id}', [UserSkillController::class, 'update']);
+            Route::delete('/{id}', [UserSkillController::class, 'destroy']);
+        });   
 });
