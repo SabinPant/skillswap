@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Exceptions\DomainValidationException;
 use App\Exceptions\NotFoundException;
+use Illuminate\Support\Facades\DB;
 use App\Jobs\SendEmailVerificationJob;
 use App\Jobs\SendPasswordResetEmailJob;
 use App\Models\User;
@@ -217,12 +218,11 @@ class AuthService
     }
 
     /**
-     * Resets a user's password using a single-use reset token and revokes 
+     * Reset a user's password using a single-use reset token and revoke
      * all active sessions.
      *
-     * @param string $rawToken
-     * @param string $newPassword
-     * @return void
+     * Both the password update and token revocation happen in a single
+     * database transaction — if either fails, neither persists.
      *
      * @throws DomainValidationException If the token is invalid or expired.
      * @throws NotFoundException         If the user no longer exists.
@@ -235,7 +235,7 @@ class AuthService
             throw new DomainValidationException(
                 'Invalid or expired reset token.',
                 'INVALID_RESET_TOKEN',
-                400
+                400,
             );
         }
 
@@ -245,12 +245,11 @@ class AuthService
             throw new NotFoundException('User not found.');
         }
 
-        $user->password = $newPassword;
-        
-        // Invalidate all existing sessions/tokens upon password reset
-        $user->tokens()->delete();
-        
-        $user->save();
+        DB::transaction(function () use ($user, $newPassword) {
+            $user->password = $newPassword;
+            $user->save();
+            $user->tokens()->delete();
+        });
     }
 
     /**

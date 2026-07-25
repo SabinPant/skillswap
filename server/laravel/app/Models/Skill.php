@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\SkillCategory;
+use App\Models\SkillRequest;
+use App\Models\UserSkill;
 
 class Skill extends Model
 {
@@ -38,4 +40,21 @@ class Skill extends Model
             'category' => SkillCategory::class,
         ];
     }
+
+    /**
+     * Users who have listed this skill (teach or learn).
+     */
+    public function userSkills(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UserSkill::class);
+    }
+
+    /**
+     * Skill requests that reference this skill.
+     */
+    public function skillRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SkillRequest::class);
+    }
+
 }
