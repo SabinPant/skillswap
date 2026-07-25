@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\SkillController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,4 +47,21 @@ Route::prefix('v1')->group(function () {
         Route::post('/users/{id}/avatar', [UserController::class, 'uploadAvatar'])
             ->middleware('throttle:avatar-upload');
     });
+
+    // Skills — authenticated read
+    Route::middleware(['throttle:default', 'auth:sanctum'])
+        ->prefix('skills')
+        ->group(function () {
+            Route::get('/', [SkillController::class, 'index']);
+            Route::get('/{id}', [SkillController::class, 'show']);
+        });
+
+    // Skills — Admin only
+    Route::middleware(['throttle:default', 'auth:sanctum', \App\Http\Middleware\EnsureUserIsAdmin::class])
+        ->prefix('skills')
+        ->group(function () {
+            Route::post('/', [SkillController::class, 'store']);
+            Route::put('/{id}', [SkillController::class, 'update']);
+            Route::delete('/{id}', [SkillController::class, 'destroy']);
+        });
 });

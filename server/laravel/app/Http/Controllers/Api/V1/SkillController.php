@@ -33,6 +33,20 @@ class SkillController extends Controller
     }
 
     /**
+     * Get a single skill by ID.
+     */
+    public function show(string $id): JsonResponse
+    {
+        $skill = $this->skillRepository->findById($id);
+
+        if ($skill === null) {
+            throw new NotFoundException('Skill not found.');
+        }
+
+        return $this->successResponse($skill);
+    }
+
+    /**
      * Create a new skill (Admin only).
      */
     public function store(StoreSkillRequest $request): JsonResponse
