@@ -27,4 +27,26 @@ class UserSkillFactory extends Factory
             'wants_to_learn'    => false,
         ];
     }
+
+    /**
+     * The user wants to learn this skill (only).
+     */
+    public function learning(): static
+    {
+        return $this->state(fn () => [
+            'can_teach'      => false,
+            'wants_to_learn' => true,
+        ]);
+    }
+
+    /**
+     * The user both teaches and wants to learn this skill.
+     */
+    public function teachingAndLearning(): static
+    {
+        return $this->state(fn () => [
+            'can_teach'      => true,
+            'wants_to_learn' => true,
+        ]);
+    }
 }
