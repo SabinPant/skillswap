@@ -39,15 +39,6 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    // Users
-    Route::get('/users/{id}', [UserController::class, 'show']);
-
-    Route::middleware(['throttle:default', 'auth:sanctum'])->group(function () {
-        Route::put('/users/{id}', [UserController::class, 'update']);
-        Route::post('/users/{id}/avatar', [UserController::class, 'uploadAvatar'])
-            ->middleware('throttle:avatar-upload');
-    });
-
     // Skills — authenticated read
     Route::middleware(['throttle:default', 'auth:sanctum'])
         ->prefix('skills')
