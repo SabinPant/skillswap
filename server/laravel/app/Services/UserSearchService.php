@@ -26,17 +26,22 @@ class UserSearchService
      */
     public function search(array $validated): LengthAwarePaginator
     {
+        $perPage = 20;
+
+        // Escape LIKE wildcards in the user's input before wrapping in our own.
+        $searchTerm = addcslashes($validated['skill'], '%_');
+
         // Resolve skill name to IDs (small taxonomy, ILIKE scan is cheap).
-        $skillIds = Skill::where('name', 'ilike', "%{$validated['skill']}%")
+        $skillIds = Skill::where('name', 'ilike', "%{$searchTerm}%")
             ->pluck('id')
             ->toArray();
 
         // No matching skills → empty paginated result.
         if (empty($skillIds)) {
-            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $perPage);
         }
 
-        // Expand min_proficiency to the set of qualifying levels.
+        // No filter provided → include all proficiency levels (BEGINNER through EXPERT).
         $proficiencyLevels = isset($validated['min_proficiency'])
             ? ProficiencyLevel::atLeast(ProficiencyLevel::from($validated['min_proficiency']))
             : ProficiencyLevel::atLeast(ProficiencyLevel::BEGINNER);
@@ -46,14 +51,14 @@ class UserSearchService
             ? [SkillCategory::from($validated['category'])]
             : null;
 
-        return $this->searchRepository->searchTeachers(
+            return $this->searchRepository->searchTeachers(
             skillIds:          $skillIds,
             categories:        $categories,
             lat:               $validated['lat'] ?? null,
             lng:               $validated['lng'] ?? null,
             radiusKm:          isset($validated['radius_km']) ? (int) $validated['radius_km'] : null,
             proficiencyLevels: $proficiencyLevels,
-            perPage:           20,
+            perPage:           $perPage,
         );
     }
 }
