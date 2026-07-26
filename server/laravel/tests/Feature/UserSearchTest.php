@@ -54,14 +54,13 @@ class UserSearchTest extends TestCase
         $response = $this->actingAs($this->teacher)->getJson('/api/v1/users/search?skill=Java');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.skill_name', 'Java')
-            ->assertJsonPath('data.0.name', 'Sabin');
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.skill_name', 'Java')
+            ->assertJsonPath('data.data.0.name', 'Sabin');
     }
 
     public function test_search_returns_multiple_matches_for_partial_term(): void
     {
-        // Create a second teacher who also teaches Java
         $teacher2 = User::factory()->create(['name' => 'Pragya']);
         UserSkill::factory()
             ->for($teacher2)
@@ -75,7 +74,7 @@ class UserSearchTest extends TestCase
         $response = $this->actingAs($this->teacher)->getJson('/api/v1/users/search?skill=Java');
 
         $response->assertStatus(200)
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data.data');
     }
 
     public function test_search_with_no_matching_skill_returns_empty(): void
@@ -83,7 +82,7 @@ class UserSearchTest extends TestCase
         $response = $this->actingAs($this->teacher)->getJson('/api/v1/users/search?skill=Ruby');
 
         $response->assertStatus(200)
-            ->assertJsonCount(0, 'data');
+            ->assertJsonCount(0, 'data.data');
     }
 
     public function test_search_filtered_by_proficiency(): void
@@ -93,50 +92,43 @@ class UserSearchTest extends TestCase
         );
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.skill_name', 'Java')
-            ->assertJsonPath('data.0.proficiency_level', 'expert');
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.skill_name', 'Java')
+            ->assertJsonPath('data.data.0.proficiency_level', 'expert');
     }
 
     public function test_search_route_not_shadowed_by_show(): void
     {
-        // /users/search must match search(), not show() binding id="search".
         $response = $this->actingAs($this->teacher)->getJson('/api/v1/users/search?skill=Java');
 
         $response->assertStatus(200);
-        // The response shape is paginated search results, not a single user profile.
         $this->assertArrayHasKey('data', $response->json());
     }
 
-        public function test_partial_skill_name_matches_via_substring(): void
+    public function test_partial_skill_name_matches_via_substring(): void
     {
-        // "Jav" should match "Java" via ILIKE '%Jav%'.
         $response = $this->actingAs($this->teacher)->getJson('/api/v1/users/search?skill=Jav');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.skill_name', 'Java');
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.skill_name', 'Java');
     }
 
     public function test_wildcard_characters_are_escaped(): void
     {
-        // Literal % should not match everything — addcslashes neutralises it.
         $response = $this->actingAs($this->teacher)->getJson('/api/v1/users/search?skill=%');
 
         $response->assertStatus(200)
-            ->assertJsonCount(0, 'data');
+            ->assertJsonCount(0, 'data.data');
     }
 
     public function test_proficiency_filter_excludes_lower_levels(): void
     {
-        // Sabin teaches Java at EXPERT and Python at INTERMEDIATE.
-        // Searching Java with min_proficiency=expert should include Sabin.
-        // Searching Python with min_proficiency=advanced should exclude Sabin (INTERMEDIATE < ADVANCED).
         $response = $this->actingAs($this->teacher)->getJson(
             '/api/v1/users/search?skill=Python&min_proficiency=advanced'
         );
 
         $response->assertStatus(200)
-            ->assertJsonCount(0, 'data');
+            ->assertJsonCount(0, 'data.data');
     }
 }
