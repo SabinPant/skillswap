@@ -14,13 +14,16 @@ class UserSearchRepository
     /**
      * Search for teachers by skill, category, location, and proficiency.
      *
-     * @param string[] $skillIds          Skill UUIDs to search for.
-     * @param SkillCategory[]|null $categories Skill categories to filter by.
-     * @param float|null $lat             User's latitude for radius search.
-     * @param float|null $lng             User's longitude for radius search.
-     * @param int|null $radiusKm          Search radius in kilometers.
-     * @param string[] $proficiencyLevels Proficiency levels to include.
-     * @param int $perPage                Results per page.
+     * Returns one row per matching teacher-skill pair — a teacher matching
+     * multiple searched skills appears multiple times in results.
+     *
+     * @param string[]                $skillIds
+     * @param SkillCategory[]|null    $categories
+     * @param float|null              $lat
+     * @param float|null              $lng
+     * @param int|null                $radiusKm
+     * @param string[]                $proficiencyLevels
+     * @param int                     $perPage
      *
      * @return LengthAwarePaginator
      */
@@ -68,8 +71,6 @@ class UserSearchRepository
                 ->whereRaw("({$haversine}) <= ?", [$lat, $lng, $lat, $radiusKm])
                 ->orderBy('distance_km');
         }
-
-        $query->distinct('users.id');
 
         return $query->paginate($perPage);
     }
