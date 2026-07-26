@@ -56,7 +56,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}', [SkillController::class, 'destroy']);
         });
 
-        // Users — protected (requires valid Sanctum token + default rate limit)
+    // Users — protected (requires valid Sanctum token + default rate limit)
     Route::middleware(['throttle:default', 'auth:sanctum'])->group(function () {
         // Static routes MUST come before /{id} to avoid shadowing.
         Route::get('/users/search', [UserController::class, 'search']);
@@ -67,4 +67,14 @@ Route::prefix('v1')->group(function () {
 
     // Users — public
     Route::get('/users/{id}', [UserController::class, 'show']);
+
+    // User Skills — authenticated user's own skill listings
+    Route::middleware(['throttle:default', 'auth:sanctum'])
+        ->prefix('user-skills')
+        ->group(function () {
+            Route::get('/', [UserSkillController::class, 'index']);
+            Route::post('/', [UserSkillController::class, 'store']);
+            Route::put('/{id}', [UserSkillController::class, 'update']);
+            Route::delete('/{id}', [UserSkillController::class, 'destroy']);
+        });
 });

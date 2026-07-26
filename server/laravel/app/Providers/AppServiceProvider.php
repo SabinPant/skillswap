@@ -21,9 +21,9 @@ class AppServiceProvider extends ServiceProvider
             $config = config('services.cloudinary');
 
             return new CloudinaryConfig(
-                cloudName: $config['cloud_name'],
-                apiKey:    $config['api_key'],
-                apiSecret: $config['api_secret'],
+                cloudName: $config['cloud_name'] ?? '',
+                apiKey:    $config['api_key'] ?? '',
+                apiSecret: $config['api_secret'] ?? '',
             );
         });
     }
