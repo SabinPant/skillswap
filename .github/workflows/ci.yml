@@ -13,6 +13,9 @@ jobs:
     env:
       DB_HOST: localhost
       REDIS_HOST: localhost
+      CLOUDINARY_CLOUD_NAME: ci-test
+      CLOUDINARY_API_KEY: "000000000000000"
+      CLOUDINARY_API_SECRET: ci-test-secret
 
     defaults:
       run:
