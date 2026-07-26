@@ -74,4 +74,8 @@ Route::prefix('v1')->group(function () {
             Route::put('/{id}', [UserSkillController::class, 'update']);
             Route::delete('/{id}', [UserSkillController::class, 'destroy']);
         });   
+
+        Route::middleware(['throttle:default', 'auth:sanctum'])->group(function () {
+        Route::get('/users/search', [UserController::class, 'search']);
+    });
 });

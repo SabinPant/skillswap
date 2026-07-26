@@ -12,6 +12,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\User\AvatarUploadRequest;
+use App\Http\Requests\User\UserSearchRequest;
+use App\Services\UserSearchService;
 
 class UserController extends Controller
 {
@@ -19,6 +21,7 @@ class UserController extends Controller
 
     public function __construct(
         private readonly UserService $userService,
+        private readonly UserSearchService $searchService,
     ) {}
 
     /**
@@ -67,5 +70,15 @@ class UserController extends Controller
         $user = $this->userService->uploadAvatar($authUser, $request->file('avatar'));
 
         return $this->successResponse($user);
+    }
+
+    /**
+     * Search for teachers by skill, category, location, and proficiency.
+     */
+    public function search(UserSearchRequest $request): JsonResponse
+    {
+        $results = $this->searchService->search($request->validated());
+
+        return $this->successResponse($results);
     }
 }
