@@ -228,12 +228,28 @@ class SkillRequestService
 
     /**
      * List incoming or outgoing requests for a user.
+     *
+     * @throws DomainValidationException If the status filter value is invalid.
      */
-    public function list(string $userId, string $role, ?SkillRequestStatus $status = null): \Illuminate\Database\Eloquent\Collection
+    public function list(string $userId, string $role, ?string $status = null): \Illuminate\Database\Eloquent\Collection
     {
+        $statusEnum = null;
+
+        if ($status !== null) {
+            $statusEnum = SkillRequestStatus::tryFrom($status);
+
+            if ($statusEnum === null) {
+                throw new DomainValidationException(
+                    'The selected status is invalid.',
+                    'INVALID_STATUS_FILTER',
+                    422,
+                );
+            }
+        }
+
         return $role === 'teacher'
-            ? $this->repository->findIncoming($userId, $status)
-            : $this->repository->findOutgoing($userId, $status);
+            ? $this->repository->findIncoming($userId, $statusEnum)
+            : $this->repository->findOutgoing($userId, $statusEnum);
     }
 
     // ── Guards ────────────────────────────────────────────────────────────

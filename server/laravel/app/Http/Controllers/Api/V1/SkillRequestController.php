@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\SkillRequestStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SkillRequest\CancelSkillRequestRequest;
 use App\Http\Requests\SkillRequest\StoreSkillRequestRequest;
@@ -31,32 +30,12 @@ class SkillRequestController extends Controller
         return $this->successResponse($skillRequest, [], 201);
     }
 
-    /**
-     * List requests for the authenticated user.
-     * ?role=learner|teacher&status=pending|accepted|completed|cancelled|expired
-     */
     public function index(Request $request): JsonResponse
     {
-        $status = null;
-
-        if ($request->query('status')) {
-            $status = SkillRequestStatus::tryFrom($request->query('status'));
-
-            if ($status === null) {
-                return response()->json([
-                    'success'   => false,
-                    'message'   => 'Invalid status filter.',
-                    'code'      => 'VALIDATION_ERROR',
-                    'timestamp' => now()->toIso8601String(),
-                    'errors'    => ['status' => ['The selected status is invalid.']],
-                ], 422);
-            }
-        }
-
         $requests = $this->skillRequestService->list(
             $request->user()->id,
             $request->query('role', 'learner'),
-            $status,
+            $request->query('status'),
         );
 
         return $this->successResponse($requests);
