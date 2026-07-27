@@ -94,4 +94,15 @@ class SkillRequestRepository
             ->pluck('id')
             ->toArray();
     }
+
+    /**
+     * Scope a query to only rows where the given user is a participant.
+     */
+    private function scopeParticipant($query, string $userId): void
+    {
+        $query->where(function ($q) use ($userId) {
+            $q->where('learner_id', $userId)
+              ->orWhere('teacher_id', $userId);
+        });
+    }
 }
