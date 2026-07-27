@@ -81,7 +81,11 @@ class SkillRequestService
                 'status' => SkillRequestStatus::ACCEPTED,
             ]);
 
-            event(new \App\Events\SkillRequestStatusChanged($request));
+            event(new \App\Events\SkillRequestStatusChanged(
+                $request,
+                SkillRequestStatus::PENDING,
+                $teacher
+            ));
 
             return $request;
         });
@@ -108,7 +112,11 @@ class SkillRequestService
                 'status' => SkillRequestStatus::REJECTED,
             ]);
 
-            event(new \App\Events\SkillRequestStatusChanged($request));
+            event(new \App\Events\SkillRequestStatusChanged(
+                $request,
+                SkillRequestStatus::PENDING,
+                $teacher
+            ));
 
             return $request;
         });
@@ -136,7 +144,11 @@ class SkillRequestService
                 'cancellation_reason' => $reason,
             ]);
 
-            event(new \App\Events\SkillRequestStatusChanged($request));
+            event(new \App\Events\SkillRequestStatusChanged(
+                $request,
+                SkillRequestStatus::ACCEPTED,
+                $actor
+            ));
 
             return $request;
         });
@@ -164,7 +176,11 @@ class SkillRequestService
                 'completed_at' => Carbon::now(),
             ]);
 
-            event(new \App\Events\SkillRequestStatusChanged($request));
+            event(new \App\Events\SkillRequestStatusChanged(
+                $request,
+                SkillRequestStatus::ACCEPTED,
+                $actor
+            ));
 
             return $request;
         });
@@ -198,7 +214,11 @@ class SkillRequestService
                 'status' => SkillRequestStatus::EXPIRED,
             ]);
 
-            event(new \App\Events\SkillRequestStatusChanged($request));
+            event(new \App\Events\SkillRequestStatusChanged(
+                $request,
+                SkillRequestStatus::PENDING,
+                null
+            ));
 
             return $request;
         });
