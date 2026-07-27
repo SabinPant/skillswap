@@ -60,4 +60,15 @@ class UserSkillRepository
     {
         return $user->userSkills()->with('skill')->orderBy('created_at')->get();
     }
+
+    /**
+     * Check if a user teaches a specific skill.
+     */
+    public function userTeachesSkill(string $userId, string $skillId): bool
+    {
+        return \App\Models\UserSkill::where('user_id', $userId)
+            ->where('skill_id', $skillId)
+            ->where('can_teach', true)
+            ->exists();
+    }
 }

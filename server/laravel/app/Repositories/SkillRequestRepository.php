@@ -108,4 +108,16 @@ class SkillRequestRepository
     {
         return SkillRequest::where('id', $id)->lockForUpdate()->first();
     }
+
+    /**
+     * Check if a user has a pending request to a specific teacher for a specific skill.
+     */
+    public function existsPendingRequest(string $learnerId, string $teacherId, string $skillId): bool
+    {
+        return SkillRequest::where('learner_id', $learnerId)
+            ->where('teacher_id', $teacherId)
+            ->where('skill_id', $skillId)
+            ->where('status', SkillRequestStatus::PENDING->value)
+            ->exists();
+    }
 }

@@ -31,6 +31,8 @@ class SkillRequestService
 
     public function __construct(
         private readonly SkillRequestRepository $repository,
+        private readonly \App\Repositories\UserSkillRepository $userSkillRepository,
+
     ) {}
 
     /**
@@ -249,12 +251,7 @@ class SkillRequestService
 
     private function guardSkillTaughtByTeacher(string $teacherId, string $skillId): void
     {
-        $teaches = \App\Models\UserSkill::where('user_id', $teacherId)
-            ->where('skill_id', $skillId)
-            ->where('can_teach', true)
-            ->exists();
-
-        if (! $teaches) {
+        if (! $this->userSkillRepository->userTeachesSkill($teacherId, $skillId)) {
             throw new DomainValidationException(
                 'This teacher does not offer the requested skill.',
                 'SKILL_NOT_TAUGHT_BY_USER',
@@ -287,13 +284,7 @@ class SkillRequestService
 
     private function guardNoDuplicatePending(string $learnerId, string $teacherId, string $skillId): void
     {
-        $exists = SkillRequest::where('learner_id', $learnerId)
-            ->where('teacher_id', $teacherId)
-            ->where('skill_id', $skillId)
-            ->where('status', SkillRequestStatus::PENDING->value)
-            ->exists();
-
-        if ($exists) {
+        if ($this->repository->existsPendingRequest($learnerId, $teacherId, $skillId)) {
             throw new DomainValidationException(
                 'You already have a pending request for this skill with this teacher.',
                 'DUPLICATE_PENDING_REQUEST',
