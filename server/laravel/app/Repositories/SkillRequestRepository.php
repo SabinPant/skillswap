@@ -12,20 +12,32 @@ use Illuminate\Database\Eloquent\Collection;
 class SkillRequestRepository
 {
     /**
-     * Find a skill request by ID with a row lock for update operations.
-     * Used inside transactions to prevent concurrent state transitions.
+     * Find a skill request by ID with a row lock, scoped to a participant.
+     * Returns null if the request doesn't exist or the user is not a participant.
      */
-    public function findByIdForUpdate(string $id): ?SkillRequest
+    public function findByIdForUpdateAsParticipant(string $id, string $userId): ?SkillRequest
     {
-        return SkillRequest::where('id', $id)->lockForUpdate()->first();
+        return SkillRequest::where('id', $id)
+            ->where(function ($q) use ($userId) {
+                $q->where('learner_id', $userId)
+                  ->orWhere('teacher_id', $userId);
+            })
+            ->lockForUpdate()
+            ->first();
     }
 
     /**
-     * Find a skill request by ID (no lock, for read-only operations).
+     * Find a skill request by ID, scoped to a participant (learner or teacher).
+     * Returns null if the request doesn't exist or the user is not a participant.
      */
-    public function findById(string $id): ?SkillRequest
+    public function findByIdForParticipant(string $id, string $userId): ?SkillRequest
     {
-        return SkillRequest::find($id);
+        return SkillRequest::where('id', $id)
+            ->where(function ($q) use ($userId) {
+                $q->where('learner_id', $userId)
+                  ->orWhere('teacher_id', $userId);
+            })
+            ->first();
     }
 
     /**
