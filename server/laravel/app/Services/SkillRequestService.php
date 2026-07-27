@@ -177,7 +177,7 @@ class SkillRequestService
     public function expire(string $id): ?SkillRequest
     {
         return DB::transaction(function () use ($id) {
-            $request = SkillRequest::where('id', $id)->lockForUpdate()->first();
+            $request = $this->repository->findByIdForUpdateRaw($id);
 
             if ($request === null) {
                 \Illuminate\Support\Facades\Log::info('Expiry job: request not found.', ['id' => $id]);

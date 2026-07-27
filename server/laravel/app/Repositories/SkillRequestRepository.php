@@ -99,4 +99,13 @@ class SkillRequestRepository
               ->orWhere('teacher_id', $userId);
         });
     }
+
+    /**
+     * Find a skill request by ID with a row lock (no participant scoping).
+     * For system/internal use only (e.g., scheduled expiry job).
+     */
+    public function findByIdForUpdateRaw(string $id): ?SkillRequest
+    {
+        return SkillRequest::where('id', $id)->lockForUpdate()->first();
+    }
 }
