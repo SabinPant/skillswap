@@ -18,10 +18,7 @@ class SkillRequestRepository
     public function findByIdForUpdateAsParticipant(string $id, string $userId): ?SkillRequest
     {
         return SkillRequest::where('id', $id)
-            ->where(function ($q) use ($userId) {
-                $q->where('learner_id', $userId)
-                  ->orWhere('teacher_id', $userId);
-            })
+            ->tap(fn ($q) => $this->scopeParticipant($q, $userId))
             ->lockForUpdate()
             ->first();
     }
@@ -33,10 +30,7 @@ class SkillRequestRepository
     public function findByIdForParticipant(string $id, string $userId): ?SkillRequest
     {
         return SkillRequest::where('id', $id)
-            ->where(function ($q) use ($userId) {
-                $q->where('learner_id', $userId)
-                  ->orWhere('teacher_id', $userId);
-            })
+            ->tap(fn ($q) => $this->scopeParticipant($q, $userId))
             ->first();
     }
 
