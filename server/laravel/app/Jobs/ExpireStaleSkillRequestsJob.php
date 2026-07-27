@@ -16,7 +16,7 @@ class ExpireStaleSkillRequestsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-        public function handle(SkillRequestRepository $repository, SkillRequestService $service): void
+    public function handle(SkillRequestRepository $repository, SkillRequestService $service): void
     {
         $expiredIds = $repository->findExpiredPendingIds();
 
