@@ -16,7 +16,7 @@ class ExpireStaleSkillRequestsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    public function handle(SkillRequestRepository $repository, SkillRequestService $service): void
+        public function handle(SkillRequestRepository $repository, SkillRequestService $service): void
     {
         $expiredIds = $repository->findExpiredPendingIds();
 
@@ -25,9 +25,10 @@ class ExpireStaleSkillRequestsJob implements ShouldQueue
             return;
         }
 
-        $expiredCount  = 0;
-        $skippedCount  = 0;
-        $totalIds      = count($expiredIds);
+        $expiredCount   = 0;
+        $racedCount     = 0;  // Already resolved (normal race, not an error)
+        $errorCount     = 0;
+        $totalIds       = count($expiredIds);
 
         Log::info('Expiry job: processing stale requests.', ['total' => $totalIds]);
 
@@ -38,21 +39,22 @@ class ExpireStaleSkillRequestsJob implements ShouldQueue
                 if ($result !== null) {
                     $expiredCount++;
                 } else {
-                    $skippedCount++;
+                    $racedCount++;
                 }
             } catch (\Throwable $e) {
                 Log::error('Expiry job: failed to expire request.', [
                     'id'        => $id,
                     'exception' => $e->getMessage(),
                 ]);
-                $skippedCount++;
+                $errorCount++;
             }
         }
 
         Log::info('Expiry job: completed.', [
             'total'   => $totalIds,
             'expired' => $expiredCount,
-            'skipped' => $skippedCount,
+            'raced'   => $racedCount,
+            'errors'  => $errorCount,
         ]);
     }
 }
