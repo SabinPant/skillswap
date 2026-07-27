@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\SkillController;
 use App\Http\Controllers\Api\V1\UserSkillController;
+use App\Http\Controllers\Api\V1\SkillRequestController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes — /api/v1
@@ -76,5 +78,18 @@ Route::prefix('v1')->group(function () {
             Route::post('/', [UserSkillController::class, 'store']);
             Route::put('/{id}', [UserSkillController::class, 'update']);
             Route::delete('/{id}', [UserSkillController::class, 'destroy']);
+        });
+
+    // Skill Requests — authenticated, email-verified for creation
+    Route::middleware(['throttle:default', 'auth:sanctum'])
+        ->prefix('skill-requests')
+        ->group(function () {
+            Route::get('/', [SkillRequestController::class, 'index']);
+            Route::post('/', [SkillRequestController::class, 'store'])
+                ->middleware(\App\Http\Middleware\EnsureEmailIsVerified::class);
+            Route::put('/{id}/accept', [SkillRequestController::class, 'accept']);
+            Route::put('/{id}/reject', [SkillRequestController::class, 'reject']);
+            Route::put('/{id}/cancel', [SkillRequestController::class, 'cancel']);
+            Route::put('/{id}/complete', [SkillRequestController::class, 'complete']);
         });
 });
