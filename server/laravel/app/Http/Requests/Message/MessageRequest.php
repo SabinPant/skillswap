@@ -19,4 +19,11 @@ class MessageRequest extends FormRequest
             'content' => ['required', 'string', 'max:5000'],
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('content') && trim((string) $this->input('content')) === '') {
+            $this->merge(['content' => null]);
+        }
+    }
 }

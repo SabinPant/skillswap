@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\SkillController;
 use App\Http\Controllers\Api\V1\UserSkillController;
 use App\Http\Controllers\Api\V1\SkillRequestController;
-
+use App\Http\Controllers\Api\V1\ConversationController;
+use App\Http\Controllers\Api\V1\MessageController;
 /*
 |--------------------------------------------------------------------------
 | API Routes — /api/v1
@@ -91,5 +92,22 @@ Route::prefix('v1')->group(function () {
             Route::put('/{id}/reject', [SkillRequestController::class, 'reject']);
             Route::put('/{id}/cancel', [SkillRequestController::class, 'cancel']);
             Route::put('/{id}/complete', [SkillRequestController::class, 'complete']);
+        });
+
+    // Conversations — authenticated, participant-scoped
+    Route::middleware(['throttle:default', 'auth:sanctum'])
+        ->prefix('conversations')
+        ->group(function () {
+            Route::get('/', [ConversationController::class, 'index']);
+            Route::get('/{id}', [ConversationController::class, 'show']);
+        });
+
+    // Messages — authenticated, participant-scoped
+    Route::middleware(['throttle:default', 'auth:sanctum'])
+        ->prefix('conversations/{conversationId}/messages')
+        ->group(function () {
+            Route::get('/', [MessageController::class, 'index']);
+            Route::post('/', [MessageController::class, 'store']);
+            Route::put('/read', [MessageController::class, 'markAllRead']);
         });
 });
