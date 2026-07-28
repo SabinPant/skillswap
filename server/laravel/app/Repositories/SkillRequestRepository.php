@@ -39,7 +39,10 @@ class SkillRequestRepository
      */
     public function create(array $data): SkillRequest
     {
-        return SkillRequest::create($data);
+        $skillRequest = new SkillRequest();
+        $skillRequest->forceFill($data)->save();
+
+        return $skillRequest;
     }
 
     /**
