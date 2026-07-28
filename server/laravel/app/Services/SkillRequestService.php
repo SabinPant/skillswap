@@ -55,11 +55,13 @@ class SkillRequestService
             (int) config('skillswap.request_expiry_hours', 72)
         );
 
-        $request = $this->repository->create($data);
+        return DB::transaction(function () use ($data) {
+            $request = $this->repository->create($data);
 
-        event(new \App\Events\SkillRequestCreated($request));
+            event(new \App\Events\SkillRequestCreated($request));
 
-        return $request;
+            return $request;
+        });
     }
 
     /**
