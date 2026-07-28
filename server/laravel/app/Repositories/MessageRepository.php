@@ -32,7 +32,12 @@ class MessageRepository
 
     /**
      * Mark all unread messages in a conversation as read for a specific user.
+     *
      * Only marks messages sent by the OTHER participant.
+     *
+     * IMPORTANT: The caller must have already verified the user is a participant
+     * in this conversation via ConversationRepository::findByIdForParticipant().
+     * This repository method cannot enforce that check itself.
      */
     public function markAsRead(Conversation $conversation, string $userId): void
     {
