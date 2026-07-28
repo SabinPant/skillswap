@@ -26,11 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })
-    ->withEvents([
-        \App\Events\SkillRequestCreated::class => [
-            \App\Listeners\SkillRequestCreatedListener::class,
-        ],
-    ])
+    
     ->withExceptions(function (Exceptions $exceptions): void {
         // Force JSON responses for all API routes
         $exceptions->shouldRenderJsonWhen(

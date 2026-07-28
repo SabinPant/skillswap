@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\DTOs\CloudinaryConfig;
+use App\Events\SkillRequestCreated;
+use App\Listeners\SkillRequestCreatedListener;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,6 +36,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(
+            SkillRequestCreated::class,
+            SkillRequestCreatedListener::class,
+        );
+
         $this->registerRateLimiters();
     }
 
