@@ -48,7 +48,7 @@ class SkillRequestRepository
      */
     public function updateStatus(SkillRequest $skillRequest, array $data): SkillRequest
     {
-        $skillRequest->update($data);
+        $skillRequest->forceFill($data)->save();
 
         return $skillRequest;
     }
