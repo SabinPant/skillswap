@@ -57,6 +57,8 @@ class SkillRequestService
 
         $request = $this->repository->create($data);
 
+        $request->refresh();
+
         event(new \App\Events\SkillRequestCreated($request));
 
         return $request;
