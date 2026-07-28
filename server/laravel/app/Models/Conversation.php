@@ -25,6 +25,8 @@ class Conversation extends Model
         'user_one_id',
         'user_two_id',
         'initiating_skill_request_id',
+        'last_message_at',
+        'last_message_preview',
     ];
 
     protected function casts(): array

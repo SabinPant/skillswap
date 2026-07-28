@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\ProficiencyLevel;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Skill;
 use App\Models\User;
 use App\Models\UserSkill;
-use App\Enums\ProficiencyLevel;
 use App\Services\ConversationService;
 use Tests\TestCase;
 
@@ -114,7 +114,7 @@ class MessageTest extends TestCase
         );
 
         $response->assertStatus(200)
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data.data');
     }
 
     public function test_cursor_pagination_returns_cursor_structure(): void
