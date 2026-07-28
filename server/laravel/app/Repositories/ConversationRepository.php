@@ -20,10 +20,21 @@ class ConversationRepository
         $ids   = [$userOneId, $userTwoId];
         sort($ids);
 
-        return Conversation::firstOrCreate(
-            ['user_one_id' => $ids[0], 'user_two_id' => $ids[1]],
-            ['initiating_skill_request_id' => $skillRequestId],
-        );
+        try {
+            return Conversation::create([
+                'user_one_id'                  => $ids[0],
+                'user_two_id'                  => $ids[1],
+                'initiating_skill_request_id'  => $skillRequestId,
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23505') {
+                // Race: another process created the same pair — return the existing row.
+                return Conversation::where('user_one_id', $ids[0])
+                    ->where('user_two_id', $ids[1])
+                    ->firstOrFail();
+            }
+            throw $e;
+        }
     }
 
     /**
