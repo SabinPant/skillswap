@@ -22,22 +22,24 @@ class ConversationRepository
         $ids = [$userOneId, $userTwoId];
         sort($ids);
 
-        return DB::transaction(function () use ($ids, $skillRequestId) {
-            try {
-                return Conversation::create([
-                    'user_one_id'                  => $ids[0],
-                    'user_two_id'                  => $ids[1],
-                    'initiating_skill_request_id'  => $skillRequestId,
-                ]);
-            } catch (QueryException $e) {
-                if ($e->getCode() === '23505') {
-                    return Conversation::where('user_one_id', $ids[0])
-                        ->where('user_two_id', $ids[1])
-                        ->firstOrFail();
-                }
+        try {
+            return DB::transaction(fn () => Conversation::create([
+                'user_one_id'                  => $ids[0],
+                'user_two_id'                  => $ids[1],
+                'initiating_skill_request_id'  => $skillRequestId,
+            ]));
+        } catch (QueryException $e) {
+            if ($e->getCode() !== '23505') {
                 throw $e;
             }
-        });
+            // 23505: race — another process created the same pair.
+            // The savepoint was already rolled back by Laravel's transaction handler.
+            // Fall through to re-fetch on a clean connection.
+        }
+
+        return Conversation::where('user_one_id', $ids[0])
+            ->where('user_two_id', $ids[1])
+            ->firstOrFail();
     }
 
     /**
