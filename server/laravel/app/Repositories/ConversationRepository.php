@@ -6,6 +6,8 @@ namespace App\Repositories;
 
 use App\Models\Conversation;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 class ConversationRepository
 {
@@ -17,24 +19,25 @@ class ConversationRepository
      */
     public function getOrCreate(string $userOneId, string $userTwoId, ?string $skillRequestId = null): Conversation
     {
-        $ids   = [$userOneId, $userTwoId];
+        $ids = [$userOneId, $userTwoId];
         sort($ids);
 
-        try {
-            return Conversation::create([
-                'user_one_id'                  => $ids[0],
-                'user_two_id'                  => $ids[1],
-                'initiating_skill_request_id'  => $skillRequestId,
-            ]);
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ($e->getCode() === '23505') {
-                // Race: another process created the same pair — return the existing row.
-                return Conversation::where('user_one_id', $ids[0])
-                    ->where('user_two_id', $ids[1])
-                    ->firstOrFail();
+        return DB::transaction(function () use ($ids, $skillRequestId) {
+            try {
+                return Conversation::create([
+                    'user_one_id'                  => $ids[0],
+                    'user_two_id'                  => $ids[1],
+                    'initiating_skill_request_id'  => $skillRequestId,
+                ]);
+            } catch (QueryException $e) {
+                if ($e->getCode() === '23505') {
+                    return Conversation::where('user_one_id', $ids[0])
+                        ->where('user_two_id', $ids[1])
+                        ->firstOrFail();
+                }
+                throw $e;
             }
-            throw $e;
-        }
+        });
     }
 
     /**
