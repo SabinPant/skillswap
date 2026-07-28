@@ -19,7 +19,8 @@ class Conversation extends Model
 
     /**
      * Columns safe for mass assignment when creating a conversation.
-     * last_message_at is updated separately by MessageService.
+     * last_message_at and last_message_preview are set by MessageService
+     * when a message is sent.
      */
     protected $fillable = [
         'user_one_id',
