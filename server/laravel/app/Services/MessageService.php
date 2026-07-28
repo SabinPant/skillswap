@@ -48,8 +48,17 @@ class MessageService
             ]);
         });
 
-        // Broadcast after commit — no rollback can produce a phantom message
-        broadcast(new MessageSent($message));
+        // Broadcast after commit — no rollback can produce a phantom message.
+        // If the broadcast fails (Reverb down, network issue), the message
+        // was already persisted. Log the failure but don't block the sender.
+        try {
+            broadcast(new MessageSent($message));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Message broadcast failed.', [
+                'message_id' => $message->id,
+                'exception'  => $e->getMessage(),
+            ]);
+        }
 
         return $message;
     }
