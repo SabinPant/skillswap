@@ -50,7 +50,6 @@ class SkillRequestFactory extends Factory
     {
         return $this->state(fn () => [
             'status'       => SkillRequestStatus::COMPLETED,
-            'completed_by' => $this->faker->randomElement(['learner_id', 'teacher_id']),
             'completed_at' => Carbon::now(),
         ]);
     }
@@ -60,7 +59,6 @@ class SkillRequestFactory extends Factory
         return $this->state(fn () => [
             'status'              => SkillRequestStatus::CANCELLED,
             'cancellation_reason' => fake()->sentence(),
-            'cancelled_by'        => $this->faker->randomElement(['learner_id', 'teacher_id']),
         ]);
     }
 
