@@ -13,6 +13,7 @@ use App\Repositories\ConversationRepository;
 use App\Repositories\MessageRepository;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use App\Services\FileUploadService;
 use Illuminate\Http\UploadedFile;
 
@@ -86,6 +87,16 @@ class MessageService
             ]);
         });
 
+        // Invalidate the other participant's unread-count cache.
+        try {
+            $this->invalidateUnreadCacheForOtherParticipant($conversation, $sender->id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Unread cache invalidation failed.', [
+                'conversation_id' => $conversation->id,
+                'exception'       => $e->getMessage(),
+            ]);
+        }
+
         // Broadcast after commit.
         try {
             broadcast(new MessageSent($message));
@@ -124,6 +135,28 @@ class MessageService
         $conversation = $this->resolveConversation($conversationId, $user->id);
 
         $this->messageRepository->markAsRead($conversation, $user->id);
+
+        try {
+            Redis::del("conversation:unread:{$user->id}");
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Unread cache invalidation failed on mark-read.', [
+                'user_id'   => $user->id,
+                'exception' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Invalidate the unread-count Redis cache for the conversation's
+     * OTHER participant (not the sender).
+     */
+    private function invalidateUnreadCacheForOtherParticipant(Conversation $conversation, string $senderId): void
+    {
+        $otherUserId = $conversation->user_one_id === $senderId
+            ? $conversation->user_two_id
+            : $conversation->user_one_id;
+
+        Redis::del("conversation:unread:{$otherUserId}");
     }
 
     /**
