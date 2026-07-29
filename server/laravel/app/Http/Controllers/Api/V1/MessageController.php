@@ -45,6 +45,7 @@ class MessageController extends Controller
             $conversationId,
             $request->validated('content'),
             $request->user(),
+            $request->file('attachment'),
         );
 
         return $this->successResponse($message, [], 201);
