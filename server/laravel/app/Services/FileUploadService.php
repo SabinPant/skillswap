@@ -18,15 +18,26 @@ use RuntimeException;
  */
 class FileUploadService
 {
-    private readonly Cloudinary $cloudinary;
+    private ?Cloudinary $cloudinary = null;
 
-    public function __construct(CloudinaryConfig $config)
+    public function __construct(
+        private readonly CloudinaryConfig $config,
+    ) {}
+
+    /**
+     * Get or initialize the Cloudinary client lazily.
+     */
+    private function cloudinary(): Cloudinary
     {
-        $this->cloudinary = new Cloudinary([
-            'cloud_name' => $config->cloudName,
-            'api_key'    => $config->apiKey,
-            'api_secret' => $config->apiSecret,
-        ]);
+        if ($this->cloudinary === null) {
+            $this->cloudinary = new Cloudinary([
+                'cloud_name' => $this->config->cloudName,
+                'api_key'    => $this->config->apiKey,
+                'api_secret' => $this->config->apiSecret,
+            ]);
+        }
+
+        return $this->cloudinary;
     }
 
     /**
@@ -69,7 +80,7 @@ class FileUploadService
         }
 
         try {
-            $result = $this->cloudinary->uploadApi()->upload(
+            $result = $this->cloudinary()->uploadApi()->upload(
                 $file->getRealPath(),
                 ['folder' => $folder],
             );
