@@ -16,10 +16,14 @@ class MessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => ['required', 'string', 'max:5000'],
+            'content'    => ['nullable', 'string', 'max:5000'],
+            'attachment' => ['nullable', 'file', 'max:' . config('skillswap.chat_attachment_max_size_kb')],
         ];
     }
 
+    /**
+     * Treat whitespace-only content as null so validation sees it as absent.
+     */
     protected function prepareForValidation(): void
     {
         if ($this->has('content') && trim((string) $this->input('content')) === '') {
