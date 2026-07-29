@@ -13,46 +13,80 @@ use App\Repositories\ConversationRepository;
 use App\Repositories\MessageRepository;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\DB;
+use App\Services\FileUploadService;
+use Illuminate\Http\UploadedFile;
 
 class MessageService
 {
     public function __construct(
         private readonly ConversationRepository $conversationRepository,
         private readonly MessageRepository $messageRepository,
+        private readonly \App\Services\FileUploadService $fileUploadService,
     ) {}
 
     /**
-     * Send a message to a conversation.
+     * Send a message to a conversation, optionally with a file attachment.
      *
-     * Writes are transactional — both the message insert and conversation
-     * metadata update commit together. The broadcast fires AFTER the
-     * transaction closes, so a rollback never sends a phantom message.
+     * Guards run first (no expensive work). Upload happens before the DB
+     * transaction — if upload succeeds but DB fails, the orphaned Cloudinary
+     * file is an accepted MVP gap. If upload fails, no DB write occurs.
+     *
+     * @throws DomainValidationException If neither content nor attachment is provided.
      */
-        \public function send(string $conversationId, ?string $content, User $sender): Message
+    public function send(string $conversationId, ?string $content, User $sender, ?\Illuminate\Http\UploadedFile $attachment = null): Message
     {
         $conversation = $this->resolveConversation($conversationId, $sender->id);
 
+        // Guard: at least one of content or attachment must be present.
+        if (($content === null || trim($content) === '') && $attachment === null) {
+            throw new \App\Exceptions\DomainValidationException(
+                'A message must contain either text or an attachment.',
+                'MESSAGE_EMPTY',
+                400,
+            );
+        }
+
+        $attachmentData = null;
+
+        // Upload before the transaction — irrecoverable work first.
+        if ($attachment !== null) {
+            $result = $this->fileUploadService->upload(
+                $attachment,
+                'chat-attachments',
+                (int) config('skillswap.chat_attachment_max_size_kb'),
+                ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'text/plain'],
+            );
+
+            $attachmentData = [
+                'attachment_public_id'         => $result['public_id'],
+                'attachment_original_filename' => $attachment->getClientOriginalName(),
+                'attachment_mime_type'         => $attachment->getMimeType(),
+                'attachment_size_bytes'        => $attachment->getSize(),
+            ];
+        }
+
         $message = null;
 
-        DB::transaction(function () use ($conversation, $content, $sender, &$message) {
-            $message = $this->messageRepository->create([
-                'conversation_id' => $conversation->id,
-                'sender_id'       => $sender->id,
-                'content'         => $content,
-                'type'            => 'text',
-            ]);
+        DB::transaction(function () use ($conversation, $content, $sender, $attachmentData, &$message) {
+            $message = $this->messageRepository->create(array_merge(
+                [
+                    'conversation_id' => $conversation->id,
+                    'sender_id'       => $sender->id,
+                    'content'         => $content,
+                    'type'            => $attachmentData !== null ? 'file' : 'text',
+                ],
+                $attachmentData ?? [],
+            ));
 
             $conversation->update([
                 'last_message_at'      => $message->created_at,
-                'last_message_preview' => $content !== null
+                'last_message_preview' => $content !== null && trim($content) !== ''
                     ? mb_substr($content, 0, 100)
                     : '[Attachment]',
             ]);
         });
 
-        // Broadcast after commit — no rollback can produce a phantom message.
-        // If the broadcast fails (Reverb down, network issue), the message
-        // was already persisted. Log the failure but don't block the sender.
+        // Broadcast after commit.
         try {
             broadcast(new MessageSent($message));
         } catch (\Throwable $e) {
