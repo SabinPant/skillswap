@@ -18,11 +18,28 @@ class MessageSent implements ShouldBroadcastNow
         public readonly Message $message,
     ) {}
 
-    public function broadcastOn(): array
+    public function broadcastWith(): array
     {
-        return [
-            new PrivateChannel('conversation.' . $this->message->conversation_id),
+        $payload = [
+            'id'              => $this->message->id,
+            'conversation_id' => $this->message->conversation_id,
+            'sender_id'       => $this->message->sender_id,
+            'content'         => $this->message->content,
+            'type'            => $this->message->type->value,
+            'is_read'         => $this->message->is_read,
+            'created_at'      => $this->message->created_at->toIso8601String(),
         ];
+
+        if ($this->message->attachment_public_id !== null) {
+            $payload['attachment'] = [
+                'public_id'   => $this->message->attachment_public_id,
+                'filename'    => $this->message->attachment_original_filename,
+                'mime_type'   => $this->message->attachment_mime_type,
+                'size_bytes'  => $this->message->attachment_size_bytes,
+            ];
+        }
+
+        return $payload;
     }
 
     public function broadcastAs(): string
