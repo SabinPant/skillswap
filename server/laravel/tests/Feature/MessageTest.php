@@ -199,7 +199,7 @@ class MessageTest extends TestCase
             ['content' => '']
         );
 
-        $response->assertStatus(422);
+        $response->assertStatus(400);
     }
 
     public function test_whitespace_only_message_rejected(): void
@@ -209,6 +209,6 @@ class MessageTest extends TestCase
             ['content' => '   ']
         );
 
-        $response->assertStatus(422);
+        $response->assertStatus(400);
     }
 }
