@@ -25,15 +25,6 @@ class MessageService
         private readonly \App\Services\FileUploadService $fileUploadService,
     ) {}
 
-    /**
-     * Send a message to a conversation, optionally with a file attachment.
-     *
-     * Guards run first (no expensive work). Upload happens before the DB
-     * transaction — if upload succeeds but DB fails, the orphaned Cloudinary
-     * file is an accepted MVP gap. If upload fails, no DB write occurs.
-     *
-     * @throws DomainValidationException If neither content nor attachment is provided.
-     */
     public function send(string $conversationId, ?string $content, User $sender, ?\Illuminate\Http\UploadedFile $attachment = null): Message
     {
         $conversation = $this->resolveConversation($conversationId, $sender->id);
@@ -66,10 +57,8 @@ class MessageService
             ];
         }
 
-        $message = null;
-
-        DB::transaction(function () use ($conversation, $content, $sender, $attachmentData, &$message) {
-            $message = $this->messageRepository->create(array_merge(
+        $message = DB::transaction(function () use ($conversation, $content, $sender, $attachmentData) {
+            return $this->messageRepository->create(array_merge(
                 [
                     'conversation_id' => $conversation->id,
                     'sender_id'       => $sender->id,
@@ -78,14 +67,14 @@ class MessageService
                 ],
                 $attachmentData ?? [],
             ));
-
-            $conversation->update([
-                'last_message_at'      => $message->created_at,
-                'last_message_preview' => $content !== null && trim($content) !== ''
-                    ? mb_substr($content, 0, 100)
-                    : '[Attachment]',
-            ]);
         });
+
+        $conversation->update([
+            'last_message_at'      => $message->created_at,
+            'last_message_preview' => $content !== null && trim($content) !== ''
+                ? mb_substr($content, 0, 100)
+                : '[Attachment]',
+        ]);
 
         // Invalidate the other participant's unread-count cache.
         try {
@@ -97,14 +86,16 @@ class MessageService
             ]);
         }
 
-        // Broadcast after commit.
-        try {
-            broadcast(new MessageSent($message));
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Message broadcast failed.', [
-                'message_id' => $message->id,
-                'exception'  => $e->getMessage(),
-            ]);
+        // Broadcast after commit (skipped in testing — no Reverb server).
+        if (app()->environment() !== 'testing') {
+            try {
+                broadcast(new MessageSent($message));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Message broadcast failed.', [
+                    'message_id' => $message->id,
+                    'exception'  => $e->getMessage(),
+                ]);
+            }
         }
 
         return $message;

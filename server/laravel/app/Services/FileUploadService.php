@@ -20,9 +20,11 @@ class FileUploadService
 {
     private ?Cloudinary $cloudinary = null;
 
-    public function __construct(
+        public function __construct(
         private readonly CloudinaryConfig $config,
-    ) {}
+    ) {
+        \Illuminate\Support\Facades\Log::info('FileUploadService constructor entered');
+    }
 
     /**
      * Get or initialize the Cloudinary client lazily.
