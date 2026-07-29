@@ -211,4 +211,137 @@ class MessageTest extends TestCase
 
         $response->assertStatus(400);
     }
+
+    // ── Attachment Tests ──────────────────────────────────────────
+
+    public function test_attachment_only_message_succeeds(): void
+    {
+        $file = \Illuminate\Http\UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($this->learner)->postJson(
+            "/api/v1/conversations/{$this->conversation->id}/messages",
+            ['attachment' => $file]
+        );
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.type', 'file')
+            ->assertJsonPath('data.content', null);
+
+        $this->assertDatabaseHas('messages', [
+            'conversation_id'      => $this->conversation->id,
+            'sender_id'            => $this->learner->id,
+            'type'                 => 'file',
+            'content'              => null,
+            'attachment_mime_type' => 'application/pdf',
+        ]);
+    }
+
+    public function test_neither_content_nor_attachment_rejected(): void
+    {
+        $response = $this->actingAs($this->learner)->postJson(
+            "/api/v1/conversations/{$this->conversation->id}/messages",
+            []
+        );
+
+        $response->assertStatus(400)
+            ->assertJsonPath('code', 'MESSAGE_EMPTY');
+    }
+
+    public function test_wrong_mime_type_rejected(): void
+    {
+        $file = \Illuminate\Http\UploadedFile::fake()->create('hack.exe', 100, 'application/x-msdownload');
+
+        $response = $this->actingAs($this->learner)->postJson(
+            "/api/v1/conversations/{$this->conversation->id}/messages",
+            ['attachment' => $file]
+        );
+
+        $response->assertStatus(422)
+            ->assertJsonPath('code', 'ATTACHMENT_TYPE_NOT_ALLOWED');
+
+        // Nothing should be persisted
+        $this->assertDatabaseCount('messages', 0);
+    }
+
+    public function test_oversized_file_rejected(): void
+    {
+        $maxSizeKb = (int) config('skillswap.chat_attachment_max_size_kb');
+        $file = \Illuminate\Http\UploadedFile::fake()->create('large.pdf', $maxSizeKb + 1, 'application/pdf');
+
+        $response = $this->actingAs($this->learner)->postJson(
+            "/api/v1/conversations/{$this->conversation->id}/messages",
+            ['attachment' => $file]
+        );
+
+        $response->assertStatus(422)
+            ->assertJsonPath('code', 'VALIDATION_ERROR');
+
+        $this->assertDatabaseCount('messages', 0);
+    }
+
+    public function test_attachment_preview_shows_placeholder(): void
+    {
+        $file = \Illuminate\Http\UploadedFile::fake()->create('notes.pdf', 100, 'application/pdf');
+
+        $this->actingAs($this->learner)->postJson(
+            "/api/v1/conversations/{$this->conversation->id}/messages",
+            ['attachment' => $file]
+        );
+
+        $this->assertEquals('[Attachment]', $this->conversation->fresh()->last_message_preview);
+    }
+
+    public function test_broadcast_payload_includes_attachment_for_file_message(): void
+    {
+        $message = \App\Models\Message::factory()->create([
+            'conversation_id'             => $this->conversation->id,
+            'sender_id'                   => $this->learner->id,
+            'type'                        => 'file',
+            'content'                     => null,
+            'attachment_public_id'        => 'chat-attachments/test123',
+            'attachment_original_filename' => 'document.pdf',
+            'attachment_mime_type'        => 'application/pdf',
+            'attachment_size_bytes'       => 102400,
+        ]);
+
+        $event = new \App\Events\MessageSent($message);
+        $payload = $event->broadcastWith();
+
+        $this->assertArrayHasKey('attachment', $payload);
+        $this->assertEquals('chat-attachments/test123', $payload['attachment']['public_id']);
+        $this->assertEquals('document.pdf', $payload['attachment']['filename']);
+        $this->assertEquals('application/pdf', $payload['attachment']['mime_type']);
+        $this->assertEquals(102400, $payload['attachment']['size_bytes']);
+    }
+
+    public function test_broadcast_payload_omits_attachment_for_text_message(): void
+    {
+        $message = \App\Models\Message::factory()->create([
+            'conversation_id' => $this->conversation->id,
+            'sender_id'       => $this->learner->id,
+            'type'            => 'text',
+            'content'         => 'Hello!',
+        ]);
+
+        $event = new \App\Events\MessageSent($message);
+        $payload = $event->broadcastWith();
+
+        $this->assertArrayNotHasKey('attachment', $payload);
+    }
+
+    public function test_cache_invalidation_targets_recipient_not_sender(): void
+    {
+        \Illuminate\Support\Facades\Redis::set("conversation:unread:{$this->learner->id}", 'dummy');
+        \Illuminate\Support\Facades\Redis::set("conversation:unread:{$this->teacher->id}", 'dummy');
+
+        $this->actingAs($this->learner)->postJson(
+            "/api/v1/conversations/{$this->conversation->id}/messages",
+            ['content' => 'Hello!']
+        );
+
+        // Sender's cache should remain untouched
+        $this->assertNotNull(\Illuminate\Support\Facades\Redis::get("conversation:unread:{$this->learner->id}"));
+        // Recipient's cache should be invalidated
+        $this->assertNull(\Illuminate\Support\Facades\Redis::get("conversation:unread:{$this->teacher->id}"));
+    }
 }
