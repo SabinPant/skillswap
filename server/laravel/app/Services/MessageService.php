@@ -25,7 +25,7 @@ class MessageService
         private readonly \App\Services\FileUploadService $fileUploadService,
     ) {}
 
-    public function send(string $conversationId, ?string $content, User $sender, ?\Illuminate\Http\UploadedFile $attachment = null): Message
+        public function send(string $conversationId, ?string $content, User $sender, ?\Illuminate\Http\UploadedFile $attachment = null): Message
     {
         $conversation = $this->resolveConversation($conversationId, $sender->id);
 
@@ -58,7 +58,7 @@ class MessageService
         }
 
         $message = DB::transaction(function () use ($conversation, $content, $sender, $attachmentData) {
-            return $this->messageRepository->create(array_merge(
+            $msg = $this->messageRepository->create(array_merge(
                 [
                     'conversation_id' => $conversation->id,
                     'sender_id'       => $sender->id,
@@ -67,14 +67,16 @@ class MessageService
                 ],
                 $attachmentData ?? [],
             ));
-        });
 
-        $conversation->update([
-            'last_message_at'      => $message->created_at,
-            'last_message_preview' => $content !== null && trim($content) !== ''
-                ? mb_substr($content, 0, 100)
-                : '[Attachment]',
-        ]);
+            $conversation->update([
+                'last_message_at'      => $msg->created_at,
+                'last_message_preview' => $content !== null && trim($content) !== ''
+                    ? mb_substr($content, 0, 100)
+                    : '[Attachment]',
+            ]);
+
+            return $msg;
+        });
 
         // Invalidate the other participant's unread-count cache.
         try {
@@ -86,16 +88,14 @@ class MessageService
             ]);
         }
 
-        // Broadcast after commit (skipped in testing — no Reverb server).
-        if (app()->environment() !== 'testing') {
-            try {
-                broadcast(new MessageSent($message));
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Message broadcast failed.', [
-                    'message_id' => $message->id,
-                    'exception'  => $e->getMessage(),
-                ]);
-            }
+        // Broadcast after commit — the try/catch handles any Reverb failure.
+        try {
+            broadcast(new MessageSent($message));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Message broadcast failed.', [
+                'message_id' => $message->id,
+                'exception'  => $e->getMessage(),
+            ]);
         }
 
         return $message;
