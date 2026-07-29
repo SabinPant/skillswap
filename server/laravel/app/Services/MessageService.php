@@ -28,7 +28,7 @@ class MessageService
      * metadata update commit together. The broadcast fires AFTER the
      * transaction closes, so a rollback never sends a phantom message.
      */
-    public function send(string $conversationId, string $content, User $sender): Message
+        \public function send(string $conversationId, ?string $content, User $sender): Message
     {
         $conversation = $this->resolveConversation($conversationId, $sender->id);
 
@@ -44,7 +44,9 @@ class MessageService
 
             $conversation->update([
                 'last_message_at'      => $message->created_at,
-                'last_message_preview' => mb_substr($content, 0, 100),
+                'last_message_preview' => $content !== null
+                    ? mb_substr($content, 0, 100)
+                    : '[Attachment]',
             ]);
         });
 
