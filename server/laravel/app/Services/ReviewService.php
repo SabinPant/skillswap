@@ -134,7 +134,7 @@ class ReviewService
         if ($skillRequest->learner_id !== $userId && $skillRequest->teacher_id !== $userId) {
             throw new DomainValidationException(
                 'You are not a participant in this request.',
-                'CANNOT_REVIEW_OWN_REQUEST',
+                'NOT_A_PARTICIPANT',
                 403,
             );
         }
