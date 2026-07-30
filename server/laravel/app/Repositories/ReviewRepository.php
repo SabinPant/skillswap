@@ -11,15 +11,22 @@ class ReviewRepository
 {
     /**
      * Create a new review.
-     * Uses forceFill to persist service-computed fields (reviewee_id)
-     * that are excluded from $fillable.
+     * Returns null if a review already exists for this (skill_request_id, reviewer_id) pair.
+     * Uses forceFill to persist service-computed fields (reviewee_id).
      */
-    public function create(array $data): Review
+    public function create(array $data): ?Review
     {
-        $review = new Review();
-        $review->forceFill($data)->save();
+        try {
+            $review = new Review();
+            $review->forceFill($data)->save();
 
-        return $review;
+            return $review;
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23505') {
+                return null;
+            }
+            throw $e;
+        }
     }
 
     /**

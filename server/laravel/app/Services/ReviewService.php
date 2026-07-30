@@ -21,6 +21,12 @@ class ReviewService
     /**
      * Create a review for a completed skill request.
      *
+     * The duplicate-check is two-layered: guardNoDuplicate is a fast,
+     * friendly pre-check for the common case. The repository's create()
+     * returns null on 23505 (unique constraint violation), which is
+     * translated to REVIEW_ALREADY_SUBMITTED here — matching the
+     * "repository returns absence, service throws domain exception" pattern.
+     *
      * @throws DomainValidationException If the request is not completed,
      *                                   the reviewer is not a participant,
      *                                   or a review was already submitted.
@@ -44,6 +50,14 @@ class ReviewService
             'rating'           => $data['rating'],
             'comment'          => $data['comment'] ?? null,
         ]);
+
+        if ($review === null) {
+            throw new DomainValidationException(
+                'You have already reviewed this request.',
+                'REVIEW_ALREADY_SUBMITTED',
+                409,
+            );
+        }
 
         // Invalidate the reviewee's average rating cache.
         try {
@@ -76,13 +90,22 @@ class ReviewService
         $cached   = Redis::get($cacheKey);
 
         if ($cached !== null) {
-            return json_decode($cached, true);
+            $decoded = json_decode($cached, true);
+
+            if (is_array($decoded) && isset($decoded['average'], $decoded['count'])) {
+                return $decoded;
+            }
+            // Corrupt or malformed cache — fall through to recompute.
         }
 
         $result = $this->repository->averageRating($userId);
 
         try {
-            Redis::setex($cacheKey, (int) config('skillswap.rating_cache_ttl_minutes', 60) * 60, json_encode($result));
+            Redis::setex(
+                $cacheKey,
+                (int) config('skillswap.rating_cache_ttl_minutes', 60) * 60,
+                json_encode($result),
+            );
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Rating cache write failed.', [
                 'user_id'   => $userId,
