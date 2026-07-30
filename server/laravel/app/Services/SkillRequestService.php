@@ -58,6 +58,8 @@ class SkillRequestService
         return DB::transaction(function () use ($data) {
             $request = $this->repository->create($data);
 
+            $request->load(['learner', 'skill']);
+            
             event(new \App\Events\SkillRequestCreated($request));
 
             return $request;
