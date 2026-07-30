@@ -83,8 +83,6 @@ class MessageSentListener implements ShouldQueue
                 'exception' => $e->getMessage(),
                 'trace'     => $e->getTraceAsString(),
             ]);
-
-            throw $e; // re-throw so we still see the failure, but after logging
         }
     }
 
