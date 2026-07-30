@@ -51,6 +51,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Listeners\MessageSentListener::class,
         );
 
+        Event::listen(
+            \App\Events\SkillRequestCreated::class,
+            \App\Listeners\NotifyTeacherOfNewRequest::class,
+        );
+
         $this->registerRateLimiters();
     }
 
