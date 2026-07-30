@@ -1,7 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Broadcast;
 use App\Repositories\ConversationRepository;
+use Illuminate\Support\Facades\Broadcast;
+
+Broadcast::channel('user.{userId}', function ($user, $userId) {
+    return $user->id === $userId;
+});
 
 Broadcast::channel('conversation.{conversationId}', function ($user, $conversationId) {
     $repository = app(ConversationRepository::class);
