@@ -13,6 +13,7 @@ enum NotificationType: string
     case REQUEST_ACCEPTED  = 'request_accepted';
     case REQUEST_REJECTED  = 'request_rejected';
     case REQUEST_CANCELLED = 'request_cancelled';
+    case REQUEST_COMPLETED = 'request_completed';
     case REQUEST_EXPIRED   = 'request_expired';
     case SESSION_REMINDER  = 'session_reminder';
     case REVIEW_RECEIVED   = 'review_received';
