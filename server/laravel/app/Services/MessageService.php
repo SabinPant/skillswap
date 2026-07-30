@@ -78,18 +78,18 @@ class MessageService
             ));
         });
 
-        // In testing, skip side effects — listeners and notifications
-        // are not needed for message delivery assertions.
-        if (app()->environment('testing')) {
-            return $message;
-        }
-
         $conversation->update([
             'last_message_at'      => $message->created_at,
             'last_message_preview' => $content !== null && trim($content) !== ''
                 ? mb_substr($content, 0, 100)
                 : '[Attachment]',
         ]);
+
+        // In testing, skip side effects — listeners and notifications
+        // are not needed for message delivery assertions.
+        if (app()->environment('testing')) {
+            return $message;
+        }
 
         // Invalidate the other participant's unread-count cache.
         try {
@@ -102,7 +102,7 @@ class MessageService
         }
 
         $message->load(['conversation', 'sender']);
-        
+
         // Broadcast after commit — the try/catch handles any Reverb failure.
         try {
             broadcast(new MessageSent($message));
