@@ -85,6 +85,8 @@ class SkillRequestService
                 'status' => SkillRequestStatus::ACCEPTED,
             ]);
 
+            $request->load('skill');
+
             event(new \App\Events\SkillRequestStatusChanged(
                 $request,
                 SkillRequestStatus::PENDING,
@@ -115,6 +117,8 @@ class SkillRequestService
             $this->repository->updateStatus($request, [
                 'status' => SkillRequestStatus::REJECTED,
             ]);
+
+            $request->load('skill');
 
             event(new \App\Events\SkillRequestStatusChanged(
                 $request,
@@ -148,6 +152,8 @@ class SkillRequestService
                 'cancellation_reason' => $reason,
             ]);
 
+            $request->load('skill');
+
             event(new \App\Events\SkillRequestStatusChanged(
                 $request,
                 SkillRequestStatus::ACCEPTED,
@@ -179,6 +185,8 @@ class SkillRequestService
                 'completed_by' => $actor->id,
                 'completed_at' => Carbon::now(),
             ]);
+
+            $request->load('skill');
 
             event(new \App\Events\SkillRequestStatusChanged(
                 $request,
@@ -217,6 +225,8 @@ class SkillRequestService
             $this->repository->updateStatus($request, [
                 'status' => SkillRequestStatus::EXPIRED,
             ]);
+
+            $request->load('skill');
 
             event(new \App\Events\SkillRequestStatusChanged(
                 $request,
