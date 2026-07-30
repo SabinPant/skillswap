@@ -158,4 +158,17 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        // Check constraint violation — rating out of range, intent validation, etc. (422)
+        $exceptions->renderable(function (QueryException $e) {
+            if ($e->getCode() === '23514') {
+                return response()->json([
+                    'success'   => false,
+                    'message'   => 'The given data violates a data integrity constraint.',
+                    'code'      => 'VALIDATION_ERROR',
+                    'timestamp' => now()->toIso8601String(),
+                    'errors'    => [],
+                ], 422);
+            }
+        });
+
     })->create();
