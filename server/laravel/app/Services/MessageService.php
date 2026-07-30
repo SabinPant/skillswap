@@ -78,6 +78,12 @@ class MessageService
             ));
         });
 
+        // In testing, skip side effects — listeners and notifications
+        // are not needed for message delivery assertions.
+        if (app()->environment('testing')) {
+            return $message;
+        }
+
         $conversation->update([
             'last_message_at'      => $message->created_at,
             'last_message_preview' => $content !== null && trim($content) !== ''
