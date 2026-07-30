@@ -35,6 +35,7 @@ class Notification extends Model
         'title',
         'message',
         'data',
+        'unread_count',
     ];
 
     /**
@@ -43,9 +44,10 @@ class Notification extends Model
     protected function casts(): array
     {
         return [
-            'type'    => NotificationType::class,
-            'data'    => 'array',
-            'is_read' => 'boolean',
+            'type'         => NotificationType::class,
+            'data'         => 'array',
+            'is_read'       => 'boolean',
+            'unread_count' => 'integer',
         ];
     }
 
