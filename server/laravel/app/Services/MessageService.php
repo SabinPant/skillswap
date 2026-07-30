@@ -97,6 +97,8 @@ class MessageService
             ]);
         }
 
+        $message->load(['conversation', 'sender']);
+        
         // Broadcast after commit — the try/catch handles any Reverb failure.
         try {
             broadcast(new MessageSent($message));
