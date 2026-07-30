@@ -45,15 +45,20 @@ class ReviewRepository
     }
 
     /**
-     * Compute the average rating for a user.
+     * Compute the average rating and total review count for a user.
      * Includes hidden reviews for audit accuracy per SKILLSWAP.md.
+     *
+     * @return array{average: ?float, count: int}
      */
-    public function averageRating(string $userId): ?float
+    public function averageRating(string $userId): array
     {
         $result = Review::where('reviewee_id', $userId)
             ->selectRaw('AVG(rating) as average, COUNT(*) as count')
             ->first();
 
-        return $result->average !== null ? round((float) $result->average, 1) : null;
+        return [
+            'average' => $result->average !== null ? round((float) $result->average, 1) : null,
+            'count'   => (int) $result->count,
+        ];
     }
 }
