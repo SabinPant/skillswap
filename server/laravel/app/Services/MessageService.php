@@ -85,12 +85,6 @@ class MessageService
                 : '[Attachment]',
         ]);
 
-        // In testing, skip side effects — listeners and notifications
-        // are not needed for message delivery assertions.
-        if (app()->environment('testing')) {
-            return $message;
-        }
-
         // Invalidate the other participant's unread-count cache.
         try {
             $this->invalidateUnreadCacheForOtherParticipant($conversation, $sender->id);
@@ -101,16 +95,19 @@ class MessageService
             ]);
         }
 
-        $message->load(['conversation', 'sender']);
+        // Skip listener-triggered side effects in testing to prevent
+        // FK-violation transaction poisoning from RefreshDatabase.
+        if (! app()->environment('testing')) {
+            $message->load(['conversation', 'sender']);
 
-        // Broadcast after commit — the try/catch handles any Reverb failure.
-        try {
-            broadcast(new MessageSent($message));
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Message broadcast failed.', [
-                'message_id' => $message->id,
-                'exception'  => $e->getMessage(),
-            ]);
+            try {
+                broadcast(new MessageSent($message));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Message broadcast failed.', [
+                    'message_id' => $message->id,
+                    'exception'  => $e->getMessage(),
+                ]);
+            }
         }
 
         return $message;
