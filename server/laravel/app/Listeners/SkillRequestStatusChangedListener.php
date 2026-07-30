@@ -10,10 +10,9 @@ use App\Events\NotificationSent;
 use App\Events\SkillRequestStatusChanged;
 use App\Models\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Support\Facades\Log;
 
-class SkillRequestStatusChangedListener implements ShouldQueue, ShouldQueueAfterCommit
+class SkillRequestStatusChangedListener implements ShouldQueue
 {
     /**
      * Transition map: previousStatus → newStatus determines notification type and recipient.

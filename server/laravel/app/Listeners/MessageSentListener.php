@@ -8,11 +8,10 @@ use App\Events\MessageSent;
 use App\Events\NotificationSent;
 use App\Models\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class MessageSentListener implements ShouldQueue, ShouldQueueAfterCommit
+class MessageSentListener implements ShouldQueue
 {
     /**
      * Create or update a MESSAGE_RECEIVED notification for the recipient.
@@ -23,61 +22,70 @@ class MessageSentListener implements ShouldQueue, ShouldQueueAfterCommit
      */
     public function handle(MessageSent $event): void
     {
-        $message        = $event->message;
-        $conversation   = $message->conversation;
-        $senderName     = $message->sender->name;
-        $conversationId = $message->conversation_id;
+        try {
+            $message        = $event->message;
+            $conversation   = $message->conversation;
+            $senderName     = $message->sender->name;
+            $conversationId = $message->conversation_id;
 
-        $recipientId = $conversation->user_one_id === $message->sender_id
-            ? $conversation->user_two_id
-            : $conversation->user_one_id;
+            $recipientId = $conversation->user_one_id === $message->sender_id
+                ? $conversation->user_two_id
+                : $conversation->user_one_id;
 
-        $preview = mb_substr($message->content ?: '[Attachment]', 0, 100);
+            $preview = mb_substr($message->content ?: '[Attachment]', 0, 100);
 
-        $existing = Notification::where('user_id', $recipientId)
-            ->where('type', 'message_received')
-            ->where('data->conversation_id', $conversationId)
-            ->where('is_read', false)
-            ->first();
+            $existing = Notification::where('user_id', $recipientId)
+                ->where('type', 'message_received')
+                ->where('data->conversation_id', $conversationId)
+                ->where('is_read', false)
+                ->first();
 
-        if ($existing) {
-            // Atomic update: guard, increment, and data write in one query.
-            // If last_message_id is already >= the incoming message (out-of-order
-            // delivery), the WHERE fails and zero rows match — the increment is
-            // skipped, which is an accepted low-stakes edge case.
-            $updated = Notification::where('id', $existing->id)
-                ->where('data->last_message_id', '<', $message->id)
-                ->update([
-                    'unread_count'          => DB::raw('unread_count + 1'),
-                    'data->preview'          => $preview,
-                    'data->sender_name'      => $senderName,
-                    'data->last_message_id'  => $message->id,
-                ]);
+            if ($existing) {
+                // Atomic update: guard, increment, and data write in one query.
+                // If last_message_id is already >= the incoming message (out-of-order
+                // delivery), the WHERE fails and zero rows match — the increment is
+                // skipped, which is an accepted low-stakes edge case.
+                $updated = Notification::where('id', $existing->id)
+                    ->where('data->last_message_id', '<', $message->id)
+                    ->update([
+                        'unread_count'          => DB::raw('unread_count + 1'),
+                        'data->preview'          => $preview,
+                        'data->sender_name'      => $senderName,
+                        'data->last_message_id'  => $message->id,
+                    ]);
 
-            if ($updated) {
-                $existing->refresh();
-                $this->broadcast($existing);
+                if ($updated) {
+                    $existing->refresh();
+                    $this->broadcast($existing);
+                }
+
+                return;
             }
 
-            return;
+            // Insert fresh notification.
+            $notification = Notification::create([
+                'user_id'      => $recipientId,
+                'type'         => 'message_received',
+                'title'        => "New message from {$senderName}",
+                'message'      => $message->content ?: '[Attachment]',
+                'data'         => [
+                    'conversation_id'  => $conversationId,
+                    'sender_name'      => $senderName,
+                    'preview'          => $preview,
+                    'last_message_id'  => $message->id,
+                ],
+                'unread_count' => 1,
+            ]);
+
+            $this->broadcast($notification);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('MessageSentListener failed', [
+                'exception' => $e->getMessage(),
+                'trace'     => $e->getTraceAsString(),
+            ]);
+
+            throw $e; // re-throw so we still see the failure, but after logging
         }
-
-        // Insert fresh notification.
-        $notification = Notification::create([
-            'user_id'      => $recipientId,
-            'type'         => 'message_received',
-            'title'        => "New message from {$senderName}",
-            'message'      => $message->content ?: '[Attachment]',
-            'data'         => [
-                'conversation_id'  => $conversationId,
-                'sender_name'      => $senderName,
-                'preview'          => $preview,
-                'last_message_id'  => $message->id,
-            ],
-            'unread_count' => 1,
-        ]);
-
-        $this->broadcast($notification);
     }
 
     /**

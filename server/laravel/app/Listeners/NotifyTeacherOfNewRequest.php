@@ -8,10 +8,9 @@ use App\Events\NotificationSent;
 use App\Events\SkillRequestCreated;
 use App\Models\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Support\Facades\Log;
 
-class NotifyTeacherOfNewRequest implements ShouldQueue, ShouldQueueAfterCommit
+class NotifyTeacherOfNewRequest implements ShouldQueue
 {
     public function handle(SkillRequestCreated $event): void
     {
