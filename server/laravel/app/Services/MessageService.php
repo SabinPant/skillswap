@@ -67,7 +67,7 @@ class MessageService
         }
 
         $message = DB::transaction(function () use ($conversation, $content, $sender, $attachmentData) {
-            $msg = $this->messageRepository->create(array_merge(
+            return $this->messageRepository->create(array_merge(
                 [
                     'conversation_id' => $conversation->id,
                     'sender_id'       => $sender->id,
@@ -76,16 +76,14 @@ class MessageService
                 ],
                 $attachmentData ?? [],
             ));
-
-            $conversation->update([
-                'last_message_at'      => $msg->created_at,
-                'last_message_preview' => $content !== null && trim($content) !== ''
-                    ? mb_substr($content, 0, 100)
-                    : '[Attachment]',
-            ]);
-
-            return $msg;
         });
+
+        $conversation->update([
+            'last_message_at'      => $message->created_at,
+            'last_message_preview' => $content !== null && trim($content) !== ''
+                ? mb_substr($content, 0, 100)
+                : '[Attachment]',
+        ]);
 
         // Invalidate the other participant's unread-count cache.
         try {
