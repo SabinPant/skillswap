@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\V1\UserSkillController;
 use App\Http\Controllers\Api\V1\SkillRequestController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\MessageController;
+use App\Http\Controllers\Api\V1\ReviewController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes — /api/v1
@@ -110,4 +112,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/', [MessageController::class, 'store']);
             Route::put('/read', [MessageController::class, 'markAllRead']);
         });
+
+    // Reviews
+    Route::middleware(['throttle:default', 'auth:sanctum'])->group(function () {
+        Route::post('/reviews', [ReviewController::class, 'store'])
+            ->middleware('throttle:review');
+        Route::get('/reviews/user/{userId}', [ReviewController::class, 'index']);
+    });
 });
