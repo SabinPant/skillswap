@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\SkillRequestController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\ReviewController;
+use App\Http\Controllers\Api\V1\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -119,4 +120,14 @@ Route::prefix('v1')->group(function () {
             ->middleware('throttle:review');
         Route::get('/reviews/user/{userId}', [ReviewController::class, 'index']);
     });
+
+    // Notifications — authenticated, user-scoped
+    Route::middleware(['throttle:default', 'auth:sanctum'])
+        ->prefix('notifications')
+        ->group(function () {
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::put('/{id}/read', [NotificationController::class, 'markRead']);
+            Route::put('/read-all', [NotificationController::class, 'markAllRead']);
+            Route::delete('/{id}', [NotificationController::class, 'destroy']);
+        });
 });

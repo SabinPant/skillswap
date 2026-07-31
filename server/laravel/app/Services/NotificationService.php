@@ -30,13 +30,7 @@ class NotificationService
      */
     public function markRead(string $notificationId, string $userId): void
     {
-        $notification = Notification::where('id', $notificationId)
-            ->where('user_id', $userId)
-            ->first();
-
-        if ($notification === null) {
-            throw new NotFoundException('Notification not found.');
-        }
+        $notification = $this->findOwned($notificationId, $userId);
 
         $notification->update([
             'is_read'      => true,
@@ -49,10 +43,12 @@ class NotificationService
      * Excludes MESSAGE_RECEIVED — those have a dedup counter and should
      * only be marked read when the conversation is actually opened.
      * Dismissed notifications are unaffected (already hidden).
+     * 
+     * @return int The number of affected notifications.
      */
-    public function markAllRead(string $userId): void
+    public function markAllRead(string $userId): int
     {
-        Notification::where('user_id', $userId)
+        return Notification::where('user_id', $userId)
             ->where('is_read', false)
             ->where('is_dismissed', false)
             ->whereNotIn('type', [NotificationType::MESSAGE_RECEIVED->value])
@@ -68,6 +64,18 @@ class NotificationService
      */
     public function delete(string $notificationId, string $userId): void
     {
+        $notification = $this->findOwned($notificationId, $userId);
+
+        $notification->update(['is_dismissed' => true]);
+    }
+
+    /**
+     * Find a notification owned by the given user.
+     *
+     * @throws NotFoundException If the notification does not exist or belong to the user.
+     */
+    private function findOwned(string $notificationId, string $userId): Notification
+    {
         $notification = Notification::where('id', $notificationId)
             ->where('user_id', $userId)
             ->first();
@@ -76,6 +84,6 @@ class NotificationService
             throw new NotFoundException('Notification not found.');
         }
 
-        $notification->update(['is_dismissed' => true]);
+        return $notification;
     }
 }
