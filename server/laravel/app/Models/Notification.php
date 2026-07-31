@@ -36,6 +36,7 @@ class Notification extends Model
         'message',
         'data',
         'unread_count',
+        'is_dismissed',
     ];
 
     /**
@@ -48,6 +49,7 @@ class Notification extends Model
             'data'         => 'array',
             'is_read'       => 'boolean',
             'unread_count' => 'integer',
+            'is_dismissed' => 'boolean',
         ];
     }
 
