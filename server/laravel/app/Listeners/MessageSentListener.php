@@ -47,10 +47,12 @@ class MessageSentListener implements ShouldQueue
                 $updated = Notification::where('id', $existing->id)
                     ->where('data->last_message_id', '<', $message->id)
                     ->update([
-                        'unread_count'          => DB::raw('unread_count + 1'),
-                        'data->preview'          => $preview,
-                        'data->sender_name'      => $senderName,
-                        'data->last_message_id'  => $message->id,
+                        'unread_count' => DB::raw('unread_count + 1'),
+                        'data'         => DB::raw("data || " . json_encode([
+                            'preview'         => $preview,
+                            'sender_name'     => $senderName,
+                            'last_message_id' => $message->id,
+                        ]) . "::jsonb"),
                     ]);
 
                 if ($updated) {
