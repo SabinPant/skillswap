@@ -37,7 +37,6 @@ class MessageSentListener implements ShouldQueue
             $existing = Notification::where('user_id', $recipientId)
                 ->where('type', 'message_received')
                 ->where('data->conversation_id', $conversationId)
-                ->where('is_read', false)
                 ->first();
 
             if ($existing) {

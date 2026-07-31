@@ -32,10 +32,10 @@ class NotificationService
     {
         $notification = $this->findOwned($notificationId, $userId);
 
-        $notification->update([
+        $notification->forceFill([
             'is_read'      => true,
             'unread_count' => 0,
-        ]);
+        ])->save();
     }
 
     /**
@@ -66,7 +66,7 @@ class NotificationService
     {
         $notification = $this->findOwned($notificationId, $userId);
 
-        $notification->update(['is_dismissed' => true]);
+        $notification->forceFill(['is_dismissed' => true])->save();
     }
 
     /**
