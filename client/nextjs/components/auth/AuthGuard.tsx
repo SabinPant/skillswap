@@ -32,7 +32,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   // Redirect to login once hydration confirms the user is unauthenticated
   useEffect(() => {
     if (hydrated && !isAuthenticated) {
-      router.replace("/login");
+      router.replace("/auth/login");
     }
   }, [hydrated, isAuthenticated, router]);
 
