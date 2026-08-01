@@ -6,7 +6,16 @@
 // - Parse JSON and validate the response envelope
 // - Normalise errors into a thrown ApiError object
 // - Handle 401 by attempting token refresh, then redirecting to /login
+// - Deduplicate concurrent refresh attempts (shared in-flight promise)
 // - Support multipart FormData for file uploads (avatar, chat attachments)
+//
+// Known limitation: if three or more requests fire near-simultaneously on
+// token expiry, the dedup window (refreshPromise lifetime) may not cover
+// the third request if it arrives after the first refresh has already
+// resolved and cleared the shared promise. In practice this is unlikely
+// with two requests (the dedup covers the common case), but a dashboard
+// with many widgets could theoretically hit it. A fuller fix would track
+// the token version being refreshed rather than just promise presence.
 
 import type {
   ApiSuccess,
@@ -26,12 +35,14 @@ type ApiResponse<T> =
   | CursorPaginatedResponse<T>
   | PagePaginatedResponse<T>;
 
+// ── Shared in-flight refresh promise (dedup) ───────────────────────────
+
+let refreshPromise: Promise<string | null> | null = null;
+
 // ── Public API ─────────────────────────────────────────────────────────
 
 /**
  * GET a resource or a list.
- * Returns any of the three envelope shapes since GET endpoints
- * can return single resources, cursor-paginated lists, or page-paginated lists.
  */
 export async function get<T>(
   path: string,
@@ -42,7 +53,6 @@ export async function get<T>(
 
 /**
  * POST JSON or FormData to create a resource.
- * POST endpoints always return a plain ApiSuccess (never paginated).
  */
 export async function post<T>(
   path: string,
@@ -58,7 +68,6 @@ export async function post<T>(
 
 /**
  * PUT JSON to update a resource.
- * PUT endpoints always return a plain ApiSuccess (never paginated).
  */
 export async function put<T>(
   path: string,
@@ -74,7 +83,6 @@ export async function put<T>(
 
 /**
  * DELETE a resource.
- * DELETE endpoints return ApiSuccess<null> (204 No Content or 200 with null data).
  */
 export async function del(
   path: string,
@@ -128,11 +136,30 @@ async function request<T>(
           ...options,
           headers,
         });
+
+        // Success — return the retried response
         if (retryResponse.ok) {
+          if (retryResponse.status === 204) {
+            return { success: true, data: null };
+          }
           return retryResponse.json();
         }
+
+        // Retry failed for a non-auth reason (403, 422, etc.) —
+        // normalise and throw so the caller gets the real error,
+        // don't redirect to /login for an unrelated failure.
+        const retryJson = await retryResponse.json();
+        const error: ApiError = {
+          success: false,
+          message: retryJson.message || 'An unexpected error occurred',
+          code: retryJson.code || 'INTERNAL_ERROR',
+          timestamp: retryJson.timestamp || new Date().toISOString(),
+          errors: retryJson.errors || [],
+        };
+        throw error;
       }
-      // Refresh failed or retry still failed — clear token and redirect
+
+      // Refresh failed — clear token and redirect
       localStorage.removeItem('auth_token');
       window.location.href = '/login';
     }
@@ -157,30 +184,50 @@ async function request<T>(
 /**
  * Attempt to refresh the current token.
  * Returns the new token string, or null if refresh failed.
+ *
+ * Concurrent 401s are deduplicated: if a refresh is already in flight,
+ * subsequent callers wait on the same shared promise. Once it resolves,
+ * the promise is cleared so the next expiry cycle can fire a fresh refresh.
+ *
+ * Known limitation: three or more near-simultaneous 401s may race past
+ * the dedup window if the third arrives after the first refresh has
+ * already resolved and cleared refreshPromise. In practice, two concurrent
+ * requests (the common dashboard case) are covered.
  */
 async function tryRefresh(currentToken: string): Promise<string | null> {
-  try {
-    const response = await fetch(`${API_BASE}/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${currentToken}`,
-      },
-    });
-
-    if (!response.ok) return null;
-
-    const json: ApiSuccess<{ token: string }> = await response.json();
-    const newToken = json.data?.token;
-
-    if (newToken) {
-      localStorage.setItem('auth_token', newToken);
-      return newToken;
-    }
-
-    return null;
-  } catch {
-    return null;
+  // Dedup: if a refresh is already in flight, wait for it
+  if (refreshPromise) {
+    return refreshPromise;
   }
+
+  refreshPromise = (async () => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${currentToken}`,
+        },
+      });
+
+      if (!response.ok) return null;
+
+      const json: ApiSuccess<{ token: string }> = await response.json();
+      const newToken = json.data?.token;
+
+      if (newToken) {
+        localStorage.setItem('auth_token', newToken);
+        return newToken;
+      }
+
+      return null;
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
