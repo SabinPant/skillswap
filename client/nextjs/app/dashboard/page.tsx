@@ -17,6 +17,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import VerificationBanner from "@/components/dashboard/VerificationBanner";
 import SkillSummaryCard from "@/components/dashboard/SkillSummaryCard";
+import RequestsPanel from "@/components/dashboard/RequestsPanel";
 
 export default function DashboardPage() {
   return (
@@ -37,7 +38,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Requests panel — right column on desktop */}
-          <div>{/* <RequestsPanel /> */}</div>
+          <div>
+            <RequestsPanel />
+          </div>
         </div>
       </div>
     </DashboardLayout>
