@@ -16,6 +16,7 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import VerificationBanner from "@/components/dashboard/VerificationBanner";
+import SkillSummaryCard from "@/components/dashboard/SkillSummaryCard";
 
 export default function DashboardPage() {
   return (
@@ -31,7 +32,7 @@ export default function DashboardPage() {
         {/* Skill summary + quick actions — left column on desktop */}
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-6">
-            {/* <SkillSummaryCard /> */}
+            <SkillSummaryCard />
             {/* <QuickActions /> */}
           </div>
 
