@@ -100,7 +100,7 @@ export default function RegisterPage() {
               onChange={(e) => setName(e.target.value)}
               required
               autoComplete="name"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent-teach-500 focus:outline-none focus:ring-1 focus:ring-accent-teach-500"
             />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name[0]}</p>
@@ -119,7 +119,7 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent-teach-500 focus:outline-none focus:ring-1 focus:ring-accent-teach-500"
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email[0]}</p>
@@ -139,7 +139,7 @@ export default function RegisterPage() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent-teach-500 focus:outline-none focus:ring-1 focus:ring-accent-teach-500"
             />
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password[0]}</p>
@@ -161,7 +161,7 @@ export default function RegisterPage() {
               onChange={(e) => setPasswordConfirmation(e.target.value)}
               required
               autoComplete="new-password"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent-teach-500 focus:outline-none focus:ring-1 focus:ring-accent-teach-500"
             />
           </div>
 
@@ -176,7 +176,7 @@ export default function RegisterPage() {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               autoComplete="address-level2"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent-teach-500 focus:outline-none focus:ring-1 focus:ring-accent-teach-500"
             />
           </div>
 
@@ -184,7 +184,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
+            className="w-full rounded-md bg-accent-teach-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-accent-teach-600 focus:outline-none focus:ring-2 focus:ring-accent-teach-400 disabled:opacity-50"
           >
             {loading ? "Creating account…" : "Create account"}
           </button>
@@ -195,7 +195,7 @@ export default function RegisterPage() {
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
+            className="font-medium text-accent-teach-600 hover:text-accent-teach-500"
           >
             Sign in
           </Link>
