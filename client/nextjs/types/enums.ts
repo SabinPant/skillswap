@@ -36,6 +36,7 @@ export type NotificationType =
   | 'request_accepted'
   | 'request_rejected'
   | 'request_cancelled'
+  | 'request_completed'  
   | 'request_expired'
   | 'session_reminder'
   | 'review_received'
