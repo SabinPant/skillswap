@@ -28,7 +28,7 @@ class SendPasswordResetEmailJob implements ShouldQueue
     public function handle(): void
     {
         $frontendUrl = config('services.frontend_url');
-        $resetUrl    = "{$frontendUrl}/reset-password?token={$this->token}";
+        $resetUrl    = "{$frontendUrl}/auth/reset-password?token={$this->token}";
 
         $user  = $this->user;
         $token = $this->token;

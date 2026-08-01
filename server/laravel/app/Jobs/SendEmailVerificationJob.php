@@ -28,7 +28,7 @@ class SendEmailVerificationJob implements ShouldQueue
     public function handle(): void
     {
         $frontendUrl = config('services.frontend_url');
-        $verifyUrl   = "{$frontendUrl}/verify-email?token={$this->token}";
+        $verifyUrl   = "{$frontendUrl}/auth/verify-email?token={$this->token}";
 
         $user  = $this->user;
         $token = $this->token;
