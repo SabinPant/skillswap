@@ -30,7 +30,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:border-surface-warm-200 md:bg-surface-warm-50 md:px-4 md:py-6">
+    <aside className="flex w-60 flex-col border-r border-surface-warm-200 bg-surface-warm-50 px-4 py-6 h-full">
       {/* Logo / brand */}
       <Link
         href="/dashboard"
