@@ -1,16 +1,14 @@
 // app/layout.tsx
-// Root layout — loads the three-font stack via next/font/google
-// and exposes them as CSS variables consumed by globals.css @theme blocks.
+// Root layout — loads the three-font stack via next/font/google,
+// exposes them as CSS variables consumed by globals.css @theme blocks,
+// and wraps the app in TanStack Query's QueryClientProvider.
 //
-// Fraunces: characterful serif for display headings
-// Inter: warm humanist sans for body text
-// JetBrains Mono: monospace for numeric records (ratings, counts, timestamps)
-//
-// All three are self-hosted by Next.js at build time — no runtime
-// requests to Google Fonts, no render-blocking external stylesheets.
+// QueryClient is created once via useState so it survives re-renders
+// and doesn't get recreated on every route change.
 
 import type { Metadata } from "next";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -49,7 +47,7 @@ export default function RootLayout({
       className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
     >
       <body className="min-h-screen bg-surface-warm-50 font-body text-surface-ink-800">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
