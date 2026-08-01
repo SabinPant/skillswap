@@ -1,26 +1,107 @@
+/* globals.css */
+/* "Exchange Ledger" design tokens — Tailwind v4 @theme blocks.
+ *
+ * Semantic color tokens (accent-teach, accent-learn, surface-ink,
+ * surface-warm, state-success, state-error) are the ONLY color
+ * references allowed in component files — never raw hex values.
+ *
+ * Fonts are loaded via next/font in the root layout, not here.
+ * The @theme font families reference the CSS variables next/font exposes.
+ */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── Design tokens ─────────────────────────────────────────────────── */
+
+@theme {
+  /* ── Accent: Teaching (warm copper/bronze) ───────────────────── */
+  --color-accent-teach-50: #f9f3eb;
+  --color-accent-teach-100: #f0e2cb;
+  --color-accent-teach-200: #e1c69a;
+  --color-accent-teach-300: #d1a76a;
+  --color-accent-teach-400: #c28e45;
+  --color-accent-teach-500: #b8863f;
+  --color-accent-teach-600: #9d6f32;
+  --color-accent-teach-700: #825828;
+  --color-accent-teach-800: #674222;
+  --color-accent-teach-900: #4c2f1d;
+
+  /* ── Accent: Learning (verdigris teal) ───────────────────────── */
+  --color-accent-learn-50: #eaf5f4;
+  --color-accent-learn-100: #d0e9e7;
+  --color-accent-learn-200: #a3d4d0;
+  --color-accent-learn-300: #76bfb8;
+  --color-accent-learn-400: #5ba9a2;
+  --color-accent-learn-500: #4b8e8d;
+  --color-accent-learn-600: #3d7472;
+  --color-accent-learn-700: #305b59;
+  --color-accent-learn-800: #234342;
+  --color-accent-learn-900: #182d2c;
+
+  /* ── Surface: Dark ink (deep charcoal, not pure black) ───────── */
+  --color-surface-ink-50: #e8eaed;
+  --color-surface-ink-100: #c5c9d0;
+  --color-surface-ink-200: #9ea4af;
+  --color-surface-ink-300: #777f8e;
+  --color-surface-ink-400: #5a6475;
+  --color-surface-ink-500: #3d495d;
+  --color-surface-ink-600: #2d374a;
+  --color-surface-ink-700: #1f2838;
+  --color-surface-ink-800: #14171c;
+  --color-surface-ink-900: #0a0c10;
+
+  /* ── Surface: Warm off-white (parchment) ──────────────────────── */
+  --color-surface-warm-50: #fdfcf9;
+  --color-surface-warm-100: #f8f5ef;
+  --color-surface-warm-200: #edeae3;
+  --color-surface-warm-300: #d9d5cc;
+  --color-surface-warm-400: #b8b3a9;
+  --color-surface-warm-500: #9a9489;
+  --color-surface-warm-600: #7d776d;
+  --color-surface-warm-700: #605b53;
+  --color-surface-warm-800: #43403b;
+  --color-surface-warm-900: #292724;
+
+  /* ── State: Success (muted sage) ──────────────────────────────── */
+  --color-state-success-50: #f2f6f1;
+  --color-state-success-100: #e0ebe0;
+  --color-state-success-200: #c2d7c3;
+  --color-state-success-300: #a3c3a5;
+  --color-state-success-400: #8faf91;
+  --color-state-success-500: #8fa98c;
+  --color-state-success-600: #6d8a6a;
+  --color-state-success-700: #526b4f;
+  --color-state-success-800: #3a4d38;
+  --color-state-success-900: #243024;
+
+  /* ── State: Error (muted dusty rose — deliberately understated) ─ */
+  --color-state-error-50: #faf4f4;
+  --color-state-error-100: #f0dfdf;
+  --color-state-error-200: #e0c0c0;
+  --color-state-error-300: #cfa0a0;
+  --color-state-error-400: #bf8080;
+  --color-state-error-500: #a66060;
+  --color-state-error-600: #8c4a4a;
+  --color-state-error-700: #703838;
+  --color-state-error-800: #542828;
+  --color-state-error-900: #381a1a;
+
+  /* ── Typography ────────────────────────────────────────────────── */
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), Menlo, Consolas, Monaco, "Liberation Mono", "Courier New", monospace;
+
+  /* ── Border radius ─────────────────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Base element defaults ──────────────────────────────────────────── */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  background-color: var(--color-surface-warm-50);
+  color: var(--color-surface-ink-800);
 }
