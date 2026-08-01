@@ -34,6 +34,7 @@ interface AuthState {
   logout: () => Promise<void>;
   hydrate: () => Promise<void>;
   setUser: (user: AuthUser) => void;
+  resendVerification: () => Promise<void>;
 }
 
 // ── Store implementation ───────────────────────────────────────────────
@@ -145,4 +146,20 @@ export const useAuthStore = create<AuthState>((set) => ({
       isEmailVerified: user.email_verified_at !== null,
     });
   },
+
+  /**
+   * Resend the verification email for the current user.
+   * The backend returns the user model; we update the cached user
+   * so any UI reflecting email_verified_at stays current.
+   */
+  resendVerification: async () => {
+    const response = await post<AuthUser>('/auth/resend-verification');
+    if (response.data) {
+      set({
+        user: response.data,
+        isEmailVerified: response.data.email_verified_at !== null,
+      });
+    }
+  },
+
 }));
