@@ -18,6 +18,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import VerificationBanner from "@/components/dashboard/VerificationBanner";
 import SkillSummaryCard from "@/components/dashboard/SkillSummaryCard";
 import RequestsPanel from "@/components/dashboard/RequestsPanel";
+import QuickActions from "@/components/dashboard/QuickActions";
 
 export default function DashboardPage() {
   return (
@@ -34,7 +35,7 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-6">
             <SkillSummaryCard />
-            {/* <QuickActions /> */}
+            <QuickActions />
           </div>
 
           {/* Requests panel — right column on desktop */}
