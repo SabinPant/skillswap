@@ -414,40 +414,110 @@ export default function ManageSkillsPage() {
                   key={us.id}
                   className="rounded-lg border border-surface-warm-200 bg-white p-4"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-surface-ink-700">
-                        {us.skill.name}
-                      </p>
-                      <p className="text-xs text-surface-warm-400">
-                        {us.skill.category} · {us.proficiency_level}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setEditingId(us.id);
-                          setEditProficiency(us.proficiency_level);
-                          setEditCanTeach(us.can_teach);
-                          setEditWantsToLearn(us.wants_to_learn);
-                          setEditError(null);
-                        }}
-                        className="text-sm text-accent-teach-600 hover:text-accent-teach-700"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm("Remove this skill?")) {
-                            deleteMutation.mutate(us.id);
+                  {editingId === us.id ? (
+                    <div className="space-y-3">
+                      {editError && (
+                        <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+                          {editError}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-4">
+                        <select
+                          value={editProficiency}
+                          onChange={(e) =>
+                            setEditProficiency(
+                              e.target.value as ProficiencyLevel,
+                            )
                           }
-                        }}
-                        className="text-sm text-red-600 hover:text-red-700"
-                      >
-                        Remove
-                      </button>
+                          className="rounded-md border border-surface-warm-300 px-3 py-1.5 text-sm capitalize focus:border-accent-teach-500 focus:outline-none focus:ring-1 focus:ring-accent-teach-500"
+                        >
+                          {PROFICIENCIES.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </select>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={editCanTeach}
+                            onChange={(e) => {
+                              setEditCanTeach(e.target.checked);
+                              if (!e.target.checked && !editWantsToLearn) {
+                                setEditWantsToLearn(true);
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-surface-warm-300 text-accent-teach-500 focus:ring-accent-teach-400"
+                          />
+                          Teach
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={editWantsToLearn}
+                            onChange={(e) => {
+                              setEditWantsToLearn(e.target.checked);
+                              if (!e.target.checked && !editCanTeach) {
+                                setEditCanTeach(true);
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-surface-warm-300 text-accent-learn-500 focus:ring-accent-learn-400"
+                          />
+                          Learn
+                        </label>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => updateMutation.mutate(us.id)}
+                          disabled={updateMutation.isPending}
+                          className="rounded-md bg-accent-teach-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-teach-600 disabled:opacity-50"
+                        >
+                          {updateMutation.isPending ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="rounded-md border border-surface-warm-300 px-3 py-1.5 text-sm text-surface-ink-600 hover:bg-surface-warm-100"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-surface-ink-700">
+                          {us.skill.name}
+                        </p>
+                        <p className="text-xs text-surface-warm-400">
+                          {us.skill.category} · {us.proficiency_level}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingId(us.id);
+                            setEditProficiency(us.proficiency_level);
+                            setEditCanTeach(us.can_teach);
+                            setEditWantsToLearn(us.wants_to_learn);
+                            setEditError(null);
+                          }}
+                          className="text-sm text-accent-teach-600 hover:text-accent-teach-700"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm("Remove this skill?")) {
+                              deleteMutation.mutate(us.id);
+                            }
+                          }}
+                          className="text-sm text-red-600 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
