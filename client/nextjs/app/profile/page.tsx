@@ -140,7 +140,13 @@ export default function ProfilePage() {
     // If the backend returned field-level errors, show the first one
     if (apiErr.errors && !Array.isArray(apiErr.errors)) {
       const first = Object.values(apiErr.errors)[0];
-      if (first?.length) return first[0];
+      if (first?.length) {
+        // Check for file upload failure and give a more helpful message
+        if (first[0] === "The avatar failed to upload.") {
+          return "The image could not be uploaded. Please ensure the file is a JPEG, PNG, or WebP image under 2 MB.";
+        }
+        return first[0];
+      }
     }
     return apiErr.message || "Something went wrong.";
   }
