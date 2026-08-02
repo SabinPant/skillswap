@@ -80,7 +80,7 @@ export default function SkillSummaryCard() {
           List skills you can teach or want to learn to start exchanging.
         </p>
         <Link
-          href="/skills"
+          href="/skills/manage"
           className="mt-3 inline-block rounded-md bg-accent-teach-500 px-4 py-2 text-sm font-medium text-white hover:bg-accent-teach-600"
         >
           Add your first skill
@@ -116,7 +116,7 @@ export default function SkillSummaryCard() {
       </div>
 
       <Link
-        href="/skills"
+        href="/skills/manage"
         className="mt-4 inline-flex items-center text-sm font-medium text-accent-teach-600 hover:text-accent-teach-700"
       >
         Manage your skills

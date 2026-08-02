@@ -21,6 +21,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/skills", label: "Browse Skills" },
+  { href: "/skills/manage", label: "Manage Skills" },
   { href: "/requests", label: "My Requests" },
   { href: "/conversations", label: "Conversations" },
   { href: "/profile", label: "Profile" },
