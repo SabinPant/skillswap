@@ -42,6 +42,16 @@ class SkillRequestController extends Controller
     }
 
     /**
+     * Show a single skill request (participants only).
+     */
+    public function show(string $id, Request $request): JsonResponse
+    {
+        $skillRequest = $this->skillRequestService->getById($id, $request->user()->id);
+
+        return $this->successResponse($skillRequest);
+    }
+
+    /**
      * Teacher accepts a pending request.
      */
     public function accept(string $id, Request $request): JsonResponse
@@ -84,4 +94,6 @@ class SkillRequestController extends Controller
 
         return $this->successResponse($skillRequest);
     }
+
+
 }

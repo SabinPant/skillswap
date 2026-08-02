@@ -266,6 +266,29 @@ class SkillRequestService
             : $this->repository->findOutgoing($userId, $statusEnum);
     }
 
+    /**
+     * Get a single skill request by ID, scoped to a participant.
+     *
+     * @param  string  $id
+     * @param  string  $userId
+     * @return SkillRequest
+     *
+     * @throws NotFoundException If the request does not exist or the user is not a participant.
+     */
+    public function getById(string $id, string $userId): SkillRequest
+    {
+        $request = $this->repository->findByIdForParticipant($id, $userId);
+
+        if ($request === null) {
+            throw new NotFoundException('Skill request not found.');
+        }
+
+        // Eager-load the relationships the detail page needs
+        $request->load(['learner', 'teacher', 'skill']);
+
+        return $request;
+    }
+
     // ── Guards ────────────────────────────────────────────────────────────
 
     private function guardNotOwnSkill(string $learnerId, string $teacherId): void

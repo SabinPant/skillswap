@@ -89,6 +89,7 @@ Route::prefix('v1')->group(function () {
         ->prefix('skill-requests')
         ->group(function () {
             Route::get('/', [SkillRequestController::class, 'index']);
+            Route::get('/{id}', [SkillRequestController::class, 'show']);
             Route::post('/', [SkillRequestController::class, 'store'])
                 ->middleware(\App\Http\Middleware\EnsureEmailIsVerified::class);
             Route::put('/{id}/accept', [SkillRequestController::class, 'accept']);
