@@ -30,6 +30,7 @@ if (typeof window !== 'undefined') {
 function createEcho(token: string): Echo<'pusher'> {
   return new Echo({
     broadcaster: 'pusher',
+    cluster: '',
     key: process.env.NEXT_PUBLIC_REVERB_APP_KEY!,
     wsHost: process.env.NEXT_PUBLIC_REVERB_HOST,
     wsPort: Number(process.env.NEXT_PUBLIC_REVERB_PORT) ?? 8080,
