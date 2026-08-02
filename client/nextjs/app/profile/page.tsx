@@ -74,6 +74,7 @@ export default function ProfilePage() {
           location: updated.location,
         });
       }
+      queryClient.invalidateQueries({ queryKey: ["users", userId] });
       setEditing(false);
     },
   });
