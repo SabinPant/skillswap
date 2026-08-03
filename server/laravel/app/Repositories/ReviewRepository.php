@@ -40,6 +40,16 @@ class ReviewRepository
     }
 
     /**
+     * Get the review a user submitted for a specific skill request.
+     */
+    public function findForRequestAndReviewer(string $skillRequestId, string $reviewerId): ?Review
+    {
+        return Review::where('skill_request_id', $skillRequestId)
+            ->where('reviewer_id', $reviewerId)
+            ->first();
+    }
+
+    /**
      * Get public reviews received by a user (page-based, excludes hidden).
      */
     public function findByReviewee(string $userId, int $perPage = 20): LengthAwarePaginator

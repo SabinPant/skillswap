@@ -9,6 +9,7 @@ use App\Exceptions\DomainValidationException;
 use App\Models\SkillRequest;
 use App\Models\User;
 use App\Repositories\SkillRequestRepository;
+use App\Repositories\ReviewRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -32,6 +33,7 @@ class SkillRequestService
     public function __construct(
         private readonly SkillRequestRepository $repository,
         private readonly \App\Repositories\UserSkillRepository $userSkillRepository,
+        private readonly ReviewRepository $reviewRepository,
 
     ) {}
 
@@ -285,6 +287,20 @@ class SkillRequestService
 
         // Eager-load the relationships the detail page needs
         $request->load(['learner', 'teacher', 'skill']);
+        $currentUserReview = null;
+
+        if ($request->status === SkillRequestStatus::COMPLETED) {
+            $currentUserReview = $this->reviewRepository->findForRequestAndReviewer(
+                $request->id,
+                $userId,
+            );
+        }
+
+        $request->setAttribute(
+            'current_user_has_reviewed',
+            $currentUserReview !== null,
+        );
+        $request->setAttribute('current_user_review', $currentUserReview);
 
         return $request;
     }

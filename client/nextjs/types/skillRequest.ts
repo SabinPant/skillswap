@@ -13,6 +13,7 @@
 import type { SkillRequestStatus } from './enums';
 import type { PublicUser } from './user';
 import type { Skill } from './skill';
+import type { Review } from './review';
 
 // ── Core model (columns on the skill_requests table) ───────────────────
 
@@ -32,6 +33,8 @@ export interface SkillRequest {
   expires_at: string | null;   // ISO 8601
   created_at: string;
   updated_at: string;
+  current_user_has_reviewed?: boolean;
+  current_user_review?: Review | null;
 
   // Eager-loaded relationships (only present when loaded by the backend)
   learner?: PublicUser;

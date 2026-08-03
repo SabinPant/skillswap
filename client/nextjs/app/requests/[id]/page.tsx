@@ -66,6 +66,24 @@ function Avatar({ name, publicId }: { name: string; publicId: string | null }) {
   );
 }
 
+function ReadOnlyStars({ rating }: { rating: number }) {
+  return (
+    <div
+      className="flex items-center gap-1"
+      aria-label={`${rating} out of 5 stars`}
+    >
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          className={`text-xl ${star <= rating ? "text-accent-teach-500" : "text-surface-warm-300"}`}
+        >
+          ★
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function RequestDetailPage() {
   const params = useParams<{ id: string }>();
   const queryClient = useQueryClient();
@@ -92,6 +110,9 @@ export default function RequestDetailPage() {
   const isParticipant = isTeacher || isLearner;
   const canAct =
     request?.status === "pending" || request?.status === "accepted";
+  const currentUserReview = request?.current_user_review ?? null;
+  const canLeaveReview =
+    request?.status === "completed" && isParticipant && !currentUserReview;
 
   // ── Cancel state ──────────────────────────────────────────────────
   const [showCancelInput, setShowCancelInput] = useState(false);
@@ -348,9 +369,44 @@ export default function RequestDetailPage() {
         {/* Terminal state note */}
         {!canAct && isParticipant && (
           <div className="rounded-lg border border-surface-warm-200 bg-white p-5 text-center">
-            <p className="text-sm text-surface-warm-500">
-              This request is {request.status} — no further actions available.
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-surface-warm-500">
+                This request is {request.status} — no further actions available.
+              </p>
+
+              {request.status === "completed" && (
+                <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                  {canLeaveReview ? (
+                    <Link
+                      href={`/reviews/new?request=${request.id}`}
+                      className="inline-flex items-center justify-center rounded-md bg-accent-teach-500 px-4 py-2 text-sm font-medium text-white hover:bg-accent-teach-600"
+                    >
+                      Leave Review
+                    </Link>
+                  ) : (
+                    <div className="w-full rounded-lg border border-surface-warm-200 bg-surface-warm-50 p-4 text-left sm:max-w-xl">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-surface-ink-700">
+                          Your review
+                        </p>
+                        {currentUserReview && (
+                          <ReadOnlyStars rating={currentUserReview.rating} />
+                        )}
+                      </div>
+                      {currentUserReview?.comment ? (
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-surface-ink-600">
+                          {currentUserReview.comment}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-surface-warm-500">
+                          No comment left.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
