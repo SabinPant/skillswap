@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -131,4 +133,15 @@ Route::prefix('v1')->group(function () {
             Route::put('/read-all', [NotificationController::class, 'markAllRead']);
             Route::delete('/{id}', [NotificationController::class, 'destroy']);
         });
+
+    // Broadcasting auth — authenticated via Sanctum Bearer token
+    Route::post('/broadcasting/auth', function (Request $request) {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        return Broadcast::auth($request);
+    })->middleware('auth:sanctum');
 });

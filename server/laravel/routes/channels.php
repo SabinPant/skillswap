@@ -9,6 +9,5 @@ Broadcast::channel('user.{userId}', function ($user, $userId) {
 
 Broadcast::channel('conversation.{conversationId}', function ($user, $conversationId) {
     $repository = app(ConversationRepository::class);
-
     return $repository->findByIdForParticipant($conversationId, $user->id) !== null;
 });

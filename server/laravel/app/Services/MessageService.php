@@ -101,6 +101,12 @@ class MessageService
             $message->load(['conversation', 'sender']);
 
             try {
+
+            \Illuminate\Support\Facades\Log::info('Broadcasting message', [
+             'message_id' => $message->id,
+             'channel' => 'conversation.' . $message->conversation_id,
+            ]);    
+
                 broadcast(new MessageSent($message));
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error('Message broadcast failed.', [

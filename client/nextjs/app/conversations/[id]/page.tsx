@@ -44,6 +44,8 @@ export default function ConversationThreadPage() {
 
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -80,11 +82,11 @@ export default function ConversationThreadPage() {
     enabled: !!userId,
   });
 
-  // Flatten all messages from pages (newest page first, messages within each page are already newest-first)
-  const messages = useMemo(
-    () => messagePages?.pages.flatMap((p) => p.data) ?? [],
-    [messagePages],
-  );
+  // Flatten all messages from pages in chronological order (oldest top, newest bottom)
+  const messages = useMemo(() => {
+    if (!messagePages?.pages) return [];
+    return messagePages.pages.flatMap((p) => p.data).reverse();
+  }, [messagePages]);
 
   const markShouldScroll = useCallback(() => {
     shouldScrollRef.current = true;
@@ -129,6 +131,7 @@ export default function ConversationThreadPage() {
   // ── Send message mutation ─────────────────────────────────────────
   const sendMutation = useMutation({
     mutationFn: async () => {
+      setSendError(null);
       if (file) {
         const formData = new FormData();
         formData.append("content", text);
@@ -143,6 +146,7 @@ export default function ConversationThreadPage() {
       });
     },
     onSuccess: (response) => {
+      setSendError(null);
       const message = (response as ApiSuccess<Message>).data;
       if (message) {
         addMessageToCache(message);
@@ -150,12 +154,24 @@ export default function ConversationThreadPage() {
       setText("");
       setFile(null);
     },
+    onError: (error) => {
+      const apiError = error as unknown as ApiError;
+      if (apiError.errors && !Array.isArray(apiError.errors)) {
+        const first = Object.values(apiError.errors)[0];
+        if (first?.length) {
+          setSendError(first[0]);
+          return;
+        }
+      }
+      setSendError(apiError?.message || "Failed to send message.");
+    },
   });
 
   // ── WebSocket for real-time messages ──────────────────────────────
   useWebSocket(
     `conversation.${conversationId}`,
     (event: unknown) => {
+      console.log("[WS] received:", event);
       const message = event as Message;
       addMessageToCache(message);
     },
@@ -227,6 +243,9 @@ export default function ConversationThreadPage() {
   // ── Input Area ────────────────────────────────────────────────────
   const renderInputArea = () => (
     <div className="border-t border-surface-warm-200 bg-white p-4">
+      {sendError && (
+        <p className="mb-2 text-xs font-medium text-red-600">{sendError}</p>
+      )}
       <form onSubmit={handleSend} className="flex items-end gap-3">
         <div className="flex-1">
           <textarea
