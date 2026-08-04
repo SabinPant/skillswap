@@ -65,6 +65,18 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}', [SkillController::class, 'destroy']);
         });
 
+    // Admin — protected behind Sanctum + Admin role middleware
+    Route::middleware(['throttle:default', 'auth:sanctum', \App\Http\Middleware\EnsureUserIsAdmin::class])
+        ->prefix('admin')
+        ->group(function () {
+            Route::get('/stats', [\App\Http\Controllers\Api\V1\AdminController::class, 'stats']);
+            Route::get('/users', [\App\Http\Controllers\Api\V1\AdminController::class, 'users']);
+            Route::put('/users/{id}/suspend', [\App\Http\Controllers\Api\V1\AdminController::class, 'suspendUser']);
+            Route::put('/users/{id}/unsuspend', [\App\Http\Controllers\Api\V1\AdminController::class, 'unsuspendUser']);
+            Route::get('/reviews', [\App\Http\Controllers\Api\V1\AdminController::class, 'reviews']);
+            Route::put('/reviews/{id}/hide', [\App\Http\Controllers\Api\V1\AdminController::class, 'hideReview']);
+        });
+
     // Users — protected (requires valid Sanctum token + default rate limit)
     Route::middleware(['throttle:default', 'auth:sanctum'])->group(function () {
         // Static routes MUST come before /{id} to avoid shadowing.

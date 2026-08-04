@@ -50,6 +50,16 @@ class ReviewRepository
     }
 
     /**
+     * Hide a review's comment from public view.
+     * The numeric rating is retained for audit purposes per SKILLSWAP.md.
+     */
+    public function hide(Review $review): void
+    {
+        $review->is_hidden = true;
+        $review->save();
+    }
+
+    /**
      * Get public reviews received by a user (page-based, excludes hidden).
      */
     public function findByReviewee(string $userId, int $perPage = 20): LengthAwarePaginator
