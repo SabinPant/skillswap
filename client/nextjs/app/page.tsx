@@ -5,69 +5,15 @@
 import Link from "next/link";
 import PopularSkills from "@/components/landing/PopularSkills";
 import StatsSection from "@/components/landing/StatsSection";
+import LandingHeader from "@/components/layout/LandingHeader";
+import LandingFooter from "@/components/layout/LandingFooter";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-surface-warm-200">
       {/* ── Nav ────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-10 border-b border-surface-ink-600 bg-surface-ink-800">
-        <div className="mx-auto flex h-18 max-w-6xl items-center justify-between px-4 md:px-8">
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 font-display text-lg font-semibold text-surface-warm-100"
-          >
-            <svg viewBox="0 0 32 32" fill="none" className="h-6 w-6">
-              <path
-                d="M6 12c2-5 8-7 13-5"
-                stroke="#b8863f"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
-              <path
-                d="M15 5l4 2-3 4"
-                stroke="#b8863f"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M26 20c-2 5-8 7-13 5"
-                stroke="#4b8e8d"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
-              <path
-                d="M17 27l-4-2 3-4"
-                stroke="#4b8e8d"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            SkillSwap
-          </Link>
-          <div className="flex items-center gap-6">
-            <Link
-              href="#how-it-works"
-              className="hidden text-sm text-surface-warm-300 hover:text-surface-warm-50 sm:inline"
-            >
-              How it works
-            </Link>
-            <Link
-              href="/auth/login"
-              className="hidden text-sm text-surface-warm-300 hover:text-surface-warm-50 sm:inline"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/auth/register"
-              className="rounded-md bg-accent-teach-500 px-4 py-2 text-sm font-semibold text-surface-ink-900 hover:opacity-90"
-            >
-              Join free
-            </Link>
-          </div>
-        </div>
-      </nav>
+
+      <LandingHeader />
 
       {/* ── Hero ───────────────────────────────────────────────── */}
       <section className="bg-surface-ink-800 py-20 text-surface-warm-100 md:py-28">
@@ -140,7 +86,7 @@ export default function LandingPage() {
                       P
                     </div>
                     <div className="flex-1 text-sm">
-                      <span className="font-display font-semibold">Jack</span>
+                      <span className="font-display font-semibold">Prime</span>
                       <span className="text-surface-warm-400"> teaches </span>
                       <span className="font-medium text-accent-learn-400">
                         Photography
@@ -246,114 +192,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────── */}
-      <footer className="bg-surface-ink-900 py-12 text-surface-warm-300">
-        <div className="mx-auto max-w-6xl px-4 md:px-8">
-          <div className="flex flex-col gap-8 border-b border-surface-ink-700 pb-10 md:flex-row md:justify-between">
-            <div>
-              <Link
-                href="/"
-                className="flex items-center gap-2.5 font-display text-lg font-semibold text-surface-warm-100"
-              >
-                <svg viewBox="0 0 32 32" fill="none" className="h-6 w-6">
-                  <path
-                    d="M6 12c2-5 8-7 13-5"
-                    stroke="#b8863f"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M15 5l4 2-3 4"
-                    stroke="#b8863f"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M26 20c-2 5-8 7-13 5"
-                    stroke="#4b8e8d"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M17 27l-4-2 3-4"
-                    stroke="#4b8e8d"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                SkillSwap
-              </Link>
-              <p className="mt-3 max-w-[26ch] font-display text-sm italic text-surface-warm-500">
-                Skills change hands. Nothing else does.
-              </p>
-            </div>
-            <div className="flex gap-10">
-              <div>
-                <h4 className="mb-3 font-mono text-[0.7rem] uppercase tracking-widest text-surface-warm-500">
-                  Product
-                </h4>
-                <Link
-                  href="#how-it-works"
-                  className="mb-2 block text-sm hover:text-surface-warm-50"
-                >
-                  How it works
-                </Link>
-                <Link
-                  href="/skills"
-                  className="mb-2 block text-sm hover:text-surface-warm-50"
-                >
-                  Browse skills
-                </Link>
-                <Link
-                  href="/auth/register"
-                  className="block text-sm hover:text-surface-warm-50"
-                >
-                  Join free
-                </Link>
-              </div>
-              <div>
-                <h4 className="mb-3 font-mono text-[0.7rem] uppercase tracking-widest text-surface-warm-500">
-                  Company
-                </h4>
-                <Link
-                  href="/about"
-                  className="mb-2 block text-sm hover:text-surface-warm-50"
-                >
-                  About
-                </Link>
-                <Link
-                  href="/trust"
-                  className="block text-sm hover:text-surface-warm-50"
-                >
-                  Trust and safety
-                </Link>
-              </div>
-              <div>
-                <h4 className="mb-3 font-mono text-[0.7rem] uppercase tracking-widest text-surface-warm-500">
-                  Legal
-                </h4>
-                <Link
-                  href="/privacy"
-                  className="mb-2 block text-sm hover:text-surface-warm-50"
-                >
-                  Privacy
-                </Link>
-                <Link
-                  href="/terms"
-                  className="block text-sm hover:text-surface-warm-50"
-                >
-                  Terms
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center justify-between pt-6 font-mono text-xs text-surface-warm-700">
-            <span>© 2026 SkillSwap</span>
-            <span>⇄</span>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }
