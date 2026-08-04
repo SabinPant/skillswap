@@ -32,6 +32,7 @@ class AdminUserSeeder extends Seeder
         // an existing account with this email must not be silently elevated.
         if ($admin->wasRecentlyCreated) {
             $admin->role = UserRole::ADMIN;
+            $admin->email_verified_at = now();
             $admin->save();
         }
     }

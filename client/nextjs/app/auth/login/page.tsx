@@ -1,13 +1,13 @@
 "use client";
 
-// app/login/page.tsx
+// app/auth/login/page.tsx
 // Login page with email/password form.
 //
-// On successful login, redirects to /dashboard.
+// On successful login, redirects to /dashboard or /admin based on role.
 // Displays field-level validation errors from the backend's 422 response
 // and domain errors (INVALID_CREDENTIALS, ACCOUNT_SUSPENDED) as a banner.
 //
-// Already-authenticated users are redirected to /dashboard on mount.
+// Already-authenticated users are redirected to their respective dashboards on mount.
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -17,7 +17,8 @@ import type { ApiError } from "@/types/api";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated } = useAuthStore();
+  // Destructure `user` alongside `login` and `isAuthenticated` for the useEffect redirect
+  const { login, isAuthenticated, user } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,12 +26,16 @@ export default function LoginPage() {
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Already logged in — skip the form
+  // Already logged in — skip the form and route based on role
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/dashboard");
+      if (user?.role === "admin") {
+        router.replace("/admin");
+      } else {
+        router.replace("/dashboard");
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -40,7 +45,15 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push("/dashboard");
+
+      // Read the role from the store after login
+      const role = useAuthStore.getState().user?.role;
+
+      if (role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
       const apiError = err as ApiError;
 
