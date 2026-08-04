@@ -91,7 +91,7 @@ export const useAuthStore = create<AuthState>((set) => ({
    */
   logout: async () => {
     try {
-      await del('/auth/logout');
+      await post('/auth/logout');
     } finally {
       // Always clear local state, even if the server call fails
       localStorage.removeItem('auth_token');

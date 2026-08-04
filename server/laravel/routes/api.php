@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Api\V1\StatsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,7 +49,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Skills — authenticated read
-    Route::middleware(['throttle:default', 'auth:sanctum'])
+    Route::middleware(['throttle:default'])
         ->prefix('skills')
         ->group(function () {
             Route::get('/', [SkillController::class, 'index']);
@@ -133,6 +134,9 @@ Route::prefix('v1')->group(function () {
             Route::put('/read-all', [NotificationController::class, 'markAllRead']);
             Route::delete('/{id}', [NotificationController::class, 'destroy']);
         });
+
+    // Public stats — no auth required
+    Route::get('/stats', [\App\Http\Controllers\Api\V1\StatsController::class, '__invoke']);
 
     // Broadcasting auth — authenticated via Sanctum Bearer token
     Route::post('/broadcasting/auth', function (Request $request) {
