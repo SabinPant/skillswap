@@ -228,7 +228,9 @@ export default function ConversationThreadPage() {
       }
       return (
         <a
-          href={getCloudinaryUrl(msg.attachment_public_id)}
+          href={getCloudinaryUrl(msg.attachment_public_id, {
+            resourceType: "raw",
+          })}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-2 inline-block text-sm text-accent-teach-600 underline"

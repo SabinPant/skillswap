@@ -8,13 +8,6 @@ import { get, put } from "@/lib/api-client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import type { AuthUser } from "@/types/user";
 
-interface PaginatedUsers {
-  data: AuthUser[];
-  current_page: number;
-  last_page: number;
-  total: number;
-}
-
 export default function AdminUsersPage() {
   const queryClient = useQueryClient();
 
@@ -22,8 +15,20 @@ export default function AdminUsersPage() {
     queryKey: ["admin", "users"],
     queryFn: () => get<AuthUser[]>("/admin/users"),
     select: (res) => {
-      const r = res as unknown as { data: PaginatedUsers };
-      return r.data;
+      const r = res as unknown as {
+        data: {
+          data: AuthUser[];
+          current_page: number;
+          last_page: number;
+          total: number;
+        };
+      };
+      return {
+        data: r.data.data,
+        current_page: r.data.current_page,
+        last_page: r.data.last_page,
+        total: r.data.total,
+      };
     },
   });
 

@@ -102,6 +102,14 @@ class AuthService
             );
         }
 
+        if ($user->is_suspended) {
+            throw new DomainValidationException(
+                'Your account has been suspended. Please contact support.',
+                'ACCOUNT_SUSPENDED',
+                403
+            );
+        }
+
         $token = $user->createToken(
             'auth_token',
             ['*'],
