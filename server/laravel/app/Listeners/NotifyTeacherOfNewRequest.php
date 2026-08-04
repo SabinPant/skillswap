@@ -16,6 +16,16 @@ class NotifyTeacherOfNewRequest implements ShouldQueue
     {
         $request = $event->skillRequest;
 
+        // Prevent duplicate notifications for the same request
+        $existing = Notification::where('user_id', $request->teacher_id)
+            ->where('type', 'request_received')
+            ->where('data->skill_request_id', $request->id)
+            ->exists();
+
+        if ($existing) {
+            return;
+        }
+
         $notification = Notification::create([
             'user_id'      => $request->teacher_id,
             'type'         => 'request_received',

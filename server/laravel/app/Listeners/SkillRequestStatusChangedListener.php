@@ -73,6 +73,16 @@ class SkillRequestStatusChangedListener implements ShouldQueue
             NotificationType::REQUEST_COMPLETED->value => 'A skill request was completed.',
         ];
 
+        // Prevent duplicate notifications for the same request + user + type
+        $existing = Notification::where('user_id', $recipientId)
+            ->where('type', $mapping['type'])
+            ->where('data->skill_request_id', $request->id)
+            ->exists();
+
+        if ($existing) {
+            return;
+        }
+
         $notification = Notification::create([
             'user_id'      => $recipientId,
             'type'         => $mapping['type'],

@@ -102,7 +102,9 @@ export function useWebSocket(
       callbackRef.current(event);
     });
 
-    // No teardown — the shared instance stays alive across
-    // component remounts and conversation navigation.
+    return () => {
+      channel.unbind(key);
+      pusher.unsubscribe(fullChannel);
+    };
   }, [channelName, token, eventName]);
 }

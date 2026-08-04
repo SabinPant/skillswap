@@ -63,6 +63,16 @@ class MessageSentListener implements ShouldQueue
                 return;
             }
 
+             // Prevent duplicate notifications for the same request + user + type
+             $existing = Notification::where('user_id', $recipientId)
+            ->where('type', $mapping['type'])
+            ->where('data->skill_request_id', $request->id)
+            ->exists();
+
+            if ($existing) {
+            return;
+          }
+
             // Insert fresh notification.
             $notification = Notification::create([
                 'user_id'      => $recipientId,
