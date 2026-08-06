@@ -315,10 +315,6 @@ skillswap/
 │   └── Dockerfile.client
 │
 ├── .github/workflows/ci.yml       # GitHub Actions — 105 tests, PostgreSQL + Redis
-├── docs/
-│   ├── SKILLSWAP.md               # Complete spec with architecture, schema, API endpoints, business rules
-│   ├── STATUS.md                  # Sprint-by-sprint development history
-│   └── DECISIONS.md               # All technical decisions with reasoning
 └── README.md
 ```
 
